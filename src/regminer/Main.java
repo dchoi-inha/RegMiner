@@ -30,8 +30,8 @@ public class Main {
 		Set<String> C;
 		double ep, sg;
 		
-		P = loadPOIs("/homes/dchoi/exp/TraRegion/dataset/4sq/places.txt");
-		T = loadTrajectories("/homes/dchoi/exp/TraRegion/dataset/4sq/check-ins.txt");
+		P = loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/places.txt");
+		T = loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/check-ins.txt");
 		C = loadCategories();
 		ep = Env.ep;
 		sg = Env.sg;

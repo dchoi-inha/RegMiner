@@ -74,8 +74,8 @@ public class MainApp extends Application implements MapComponentInitializedListe
 
 		map = mapView.createMap(mapOptions);
 
-		ArrayList<Place> POIs = loadPOIs("/homes/dchoi/exp/TraRegion/dataset/4sq/places.txt");
-		ArrayList<Trajectory> tras = loadTras("/homes/dchoi/exp/TraRegion/dataset/4sq/check-ins.txt");
+		ArrayList<Place> POIs = loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/places.txt");
+		ArrayList<Trajectory> tras = loadTras(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/check-ins.txt");
 
 		Random rand = new Random();
 
