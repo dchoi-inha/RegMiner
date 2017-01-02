@@ -6,7 +6,7 @@ import java.util.Iterator;
 
 /**
  * @author Dong-Wan Choi at Imperial College London
- * @class TSet: the set of transitions of a pattern pattern
+ * @class TSet: the set of transitions of a pattern 'pattern'
  * @date 21 Dec 2016
  *
  */

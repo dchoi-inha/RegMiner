@@ -147,11 +147,29 @@ public class SkeletonRegMiner extends Miner {
 	}
 	
 	public ArrayList<Tset> pDBSCAN(Tset trnSet, RTree rt) {
-		//TODO: Need to implement!!!
+		HashSet<Transition> processed = new HashSet<Transition>();
+		
+		for (Transition trn: trnSet) {
+			if (processed.contains(trn)) continue;
+			
+			processed.add(trn);
+			Tset neighbors = getNeighbors(trn);
+			
+			// TODO:need to implement from here
+			
+			
+			
+		}
 		
 		
 		return null;
 	}
 	
+	public Tset getNeighbors(Transition trn) {
+		return null;
+	}
+	
 	
 }
+
+
