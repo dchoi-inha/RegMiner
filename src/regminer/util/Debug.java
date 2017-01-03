@@ -14,8 +14,8 @@ import java.io.*;
  */
 public class Debug {
 	
-	public static boolean flag = false;
-	public static String logFileName = Env.HomeDir + "/logs/minsk.log";
+	public static boolean flag = true;
+	public static String logFileName = Env.HomeDir + "/logs/regminer.log";
 	
 	public static void _PrintL(String str) {
 		if (flag) System.out.println(str);
@@ -68,5 +68,14 @@ public class Debug {
 					e.printStackTrace();
 				}
 			}
+	}
+	
+	public static void _TestDouble(Double num) {
+		if (flag) {
+			if (Double.isInfinite(num) || Double.isNaN(num)) {
+				System.err.println("Double Error:" + num + " is not normal");
+				System.exit(0);
+			}
+		}
 	}
 }

@@ -26,7 +26,16 @@ public class Tset implements Iterable<Transition>{
 	
 	public void add(Transition trn) {
 		trns.add(trn);
-		places.addAll(trn.getPOIs());
+		places.addAll(trn.computePOIs());
+	}
+	
+	public Transition get(int i) {
+		return trns.get(i);
+	}
+	
+	public void mergeWith(Tset tSet) {
+		trns.addAll(tSet.trns);
+		places.addAll(tSet.places);
 	}
 	
 	public int size(){

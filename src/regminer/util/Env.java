@@ -22,6 +22,6 @@ public class Env {
 	
 	public final static double MaxCoord = 1.0;
 	
-	public final static double ep = 0.01;
+	public final static double ep = 0.0001;
 	public final static double sg = 2000;
 }

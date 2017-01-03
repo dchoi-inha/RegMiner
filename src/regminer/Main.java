@@ -8,6 +8,7 @@ import java.util.Set;
 
 import regminer.algorithm.Miner;
 import regminer.algorithm.SkeletonRegMiner;
+import regminer.struct.PRegion;
 import regminer.struct.Place;
 import regminer.struct.Trajectory;
 import regminer.struct.Visit;
@@ -40,14 +41,14 @@ public class Main {
 		
 		Miner skeleton = new SkeletonRegMiner(P, T, C, ep, sg);
 		cpuTimeElapsed = Util.getCpuTime();
-		skeleton.mine();
+		ArrayList<PRegion> results = skeleton.mine();
 		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[0] = cpuTimeElapsed/(double)1000000000;
 		
 		System.out.println("time:" + t[0]);
 		
 	}
 	
-	private static ArrayList<Trajectory> loadTrajectories(String fpath) {
+	public static ArrayList<Trajectory> loadTrajectories(String fpath) {
 		ArrayList<Trajectory> tras = new ArrayList<Trajectory>();
 
 		BufferedReader in;
@@ -64,13 +65,16 @@ public class Main {
 
 				String [] checkins = tokens[1].split("\\|");
 
+				Visit prev = null;
 				for (int i=0; i < checkins.length; i++)
 				{
 					String [] checkin = checkins[i].split(",");
 					Visit visit = new Visit(checkin[0], checkin[1]);
 
-					if (visit.place != null)
+					if (visit.place != null && (prev == null || !prev.place.equals(visit.place))) {
 						traj.add(visit);
+						prev = visit;
+					}
 				}
 				tras.add(traj);
 			}
@@ -84,7 +88,7 @@ public class Main {
 	}
 
 
-	private static ArrayList<Place> loadPOIs(String fpath)  {
+	public static ArrayList<Place> loadPOIs(String fpath)  {
 
 		ArrayList<Place> POIs = new ArrayList<Place>();
 
@@ -126,7 +130,7 @@ public class Main {
 		return POIs;
 	}
 	
-	private static Set<String> loadCategories() {
+	public static Set<String> loadCategories() {
 		return Env.Cate_Id.keySet();
 	}
 

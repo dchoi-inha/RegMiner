@@ -6,12 +6,16 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import regminer.rtree.MBR;
 import regminer.util.Env;
 
 public class Visit {
 
 	public Date time;
 	public Place place;
+	
+	// to represent the MBR from this visit to the end of the trajectory
+	public MBR embr;
 	
 	public Visit(String timestamp, String pid) throws ParseException
 	{

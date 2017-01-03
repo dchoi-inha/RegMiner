@@ -3,12 +3,8 @@ package regminer.algorithm;
 import java.util.*;
 
 import regminer.rtree.RTree;
-import regminer.struct.PRegion;
-import regminer.struct.Pattern;
-import regminer.struct.Place;
-import regminer.struct.Trajectory;
-import regminer.struct.Transition;
-import regminer.struct.Tset;
+import regminer.struct.*;
+import regminer.util.Debug;
 
 /**
  * @author Dong-Wan Choi at Imperial College London
@@ -29,33 +25,39 @@ public class SkeletonRegMiner extends Miner {
 		// 1. Find all frequent patterns along with their sets of transitions
 		ArrayList<Tset> freqTrnSets = new ArrayList<Tset>();
 		compactGrow(freqTrnSets);		
-		
+
 		// 2. Compute pRegions for each pattern
 		for (Tset trnSet: freqTrnSets) {
+			if (trnSet.pattern.length() != 2) continue; //TODO: just for debug, to be deleted
 			Pattern seq = trnSet.pattern;			
 			System.out.println(seq + "("+trnSet.size()+")");
-			
+
 			// construct the R-tree on POIs in trnSet
 			RTree rt = new RTree();
 			for (Place p: trnSet.places) {
 				rt.insert(p);
 			}
 			System.out.print("Nodes : "+rt.nodes+" heights: "+rt.height+"\n");
-			
+
 			ArrayList<Tset> clusters = pDBSCAN(trnSet, rt);
 			
-//			for (Tset cluster: clusters) {
-//				results.add(new PRegion(cluster.getPOIs(), cluster.pattern));
-//			}
+			System.out.println("Cluster size:" + clusters.size());
+
+			for (Tset cluster: clusters) {
+				results.add(new PRegion(cluster));
+			}
+			
+			if (results.size() > 0) break;
 		}
-		
+
 		return results;
 	}
-	
-	
+
+
 	public void compactGrow(ArrayList<Tset> output) {
+		Debug._PrintL("----Start compactGrow----");
 		HashSet<String> freqCateSet = freqCategories();
-		
+
 		for (String cate: freqCateSet)
 		{
 			Pattern seq = new Pattern(cate);
@@ -69,19 +71,21 @@ public class SkeletonRegMiner extends Miner {
 				}
 			}
 			Collections.sort(tSet.trns); // sort only for length-1 patterns
-			
+
 			output.add(tSet); // output length-1 patterns
 			prefixSpan(output, freqCateSet, seq, tSet);
 		}
-		
+
+		Debug._PrintL("----End compactGrow----");
 	}
-	
+
 	// grow seq and tSet
 	private void prefixSpan(ArrayList<Tset> output, HashSet<String> freqCateSet, Pattern seq, Tset tSet) {
+	
 		for (String cate: freqCateSet)
 		{
 			Tset tSetP = transitionGrow(tSet, seq, cate);
-			
+
 			if (tSetP.size() >= this.sg) {
 				output.add(tSetP);
 				prefixSpan(output, freqCateSet, tSetP.pattern, tSetP);
@@ -111,18 +115,19 @@ public class SkeletonRegMiner extends Miner {
 		}
 		return freqCateSet;
 	}
-	
+
 	private Tset transitionGrow(Tset tSet, Pattern seq, String cate)
 	{
 		Pattern seqP = seq.grow(cate);
 		Tset tSetP = new Tset(seqP);
-		
+
 		Transition trnPrev = null;
 		int eNew = 0;
 		for (Transition trn: tSet) {
 			if (trnPrev != null && trn.traj.equals(trnPrev.traj)) { // for each transition in the same trajectory
 				eNew = trn.nextPos(cate);
 				if (eNew > trn.e) { // if such a eNew exists
+					
 					if (trnPrev.s <= trn.s && trnPrev
 							.e >= eNew) // if previous transition contains new transition
 						trnPrev.setInterval(trn.s, eNew);
@@ -142,34 +147,57 @@ public class SkeletonRegMiner extends Miner {
 				}
 			}
 		}
-		
+
 		return tSetP;
 	}
-	
+
 	public ArrayList<Tset> pDBSCAN(Tset trnSet, RTree rt) {
+		ArrayList<Tset> clusters = new ArrayList<Tset>();
 		HashSet<Transition> processed = new HashSet<Transition>();
-		
+
 		for (Transition trn: trnSet) {
 			if (processed.contains(trn)) continue;
-			
+
 			processed.add(trn);
-			Tset neighbors = getNeighbors(trn);
-			
-			// TODO:need to implement from here
-			
-			
-			
+			NeighborTset neighborTrns = getNeighbors(trn, trnSet);
+			trn.computePdensity(neighborTrns.sumRatio);
+
+			if (trn.density >= this.sg) {
+				Tset cluster = new Tset(trnSet.pattern); //TODO: Tset.add() can be overhead...in this case
+				clusters.add(cluster);
+				cluster.add(trn);
+
+				for (int i=0; i < neighborTrns.size(); i++) {
+					Transition neighbor = neighborTrns.get(i);
+					if (!processed.contains(neighbor)) {
+						processed.add(neighbor);
+						NeighborTset newNeighborTrns = getNeighbors(neighbor, trnSet);
+						neighbor.computePdensity(newNeighborTrns.sumRatio);
+						if (neighbor.density >= this.sg) {
+							cluster.add(neighbor);
+							neighborTrns.mergeWith(newNeighborTrns);
+						}
+					}
+				}
+			}
+
 		}
-		
-		
-		return null;
+
+		return clusters;
 	}
-	
-	public Tset getNeighbors(Transition trn) {
-		return null;
+
+	public NeighborTset getNeighbors(Transition trn, Tset trnSet) {
+		NeighborTset neighbors = new NeighborTset(trnSet.pattern);
+		for (Transition other: trnSet) {
+			double ratio = trn.contRatio(other, this.ep);
+			if (ratio > 0) {
+				neighbors.add(other, ratio);
+			}
+		}
+		return neighbors;
 	}
-	
-	
+
+
 }
 
 

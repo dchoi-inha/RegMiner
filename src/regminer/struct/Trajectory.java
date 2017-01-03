@@ -39,6 +39,10 @@ public class Trajectory implements Iterable<Visit>{
 		return visits.size();
 	}
 	
+	public Place placeAt(int i) {
+		return visits.get(i).place;
+	}
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;

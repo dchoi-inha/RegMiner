@@ -12,10 +12,16 @@ import java.util.HashSet;
 public class PRegion {
 	public HashSet<Place> P;
 	public Pattern S;
+	public Tset trns;
 	
-	public PRegion(HashSet<Place> POIs, Pattern seq) {
-		P = POIs;
-		S = seq;
+	public PRegion(Tset trns) {
+		P = trns.places;
+		S = trns.pattern;
+		this.trns = trns;
+	}
+	
+	public String toString() {
+		return S.toString() + "(" +trns.size()+" core transitions, " + P.size() + " POIs)";
 	}
 		
 }

@@ -4,6 +4,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
+import regminer.util.Util;
+
 /**
  * @author Dong-Wan Choi at Imperial College London
  * @class Transition
@@ -18,6 +20,8 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 	public Pattern pattern;
 	public int s, e; // [s:e]
 	
+	public double density;
+
 	public Transition(Trajectory traj, Pattern pattern, int s, int e)
 	{
 		this.traj = traj;
@@ -25,9 +29,11 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 		this.pattern = pattern;
 		this.s = s;
 		this.e = e;
+		
+		this.density = -1;
 	}
 	
-	public HashSet<Place> getPOIs() {
+	public HashSet<Place> computePOIs() {
 		HashSet<Place> places = new HashSet<Place>();
 		
 		for (Visit visit: visits) {
@@ -47,6 +53,41 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 		this.visits = traj.visits.subList(s, e+1);
 	}
 	
+	public int length() {
+		return visits.size();
+	}
+	
+	public Place placeAt(int i) {
+		return visits.get(i).place;
+	}
+	
+	public double distance(Place p) {
+		double dist = Double.MAX_VALUE;
+		
+		if (visits.size() == 1) 
+			return visits.get(0).place.loc.distance(p.loc);
+		
+		for (int i=0; i < visits.size()-1; i++) {
+			Place src = visits.get(i).place;
+			Place dst = visits.get(i+1).place;
+			dist = Math.min(dist, Util.distPointLinesegment(src.loc, dst.loc, p.loc));
+			
+		}
+		
+		return dist;
+	}
+	
+	public double contRatio(Transition other, double ep) {
+		int cnt = 0;
+		for (Visit v: other) {
+			if (this.distance(v.place) <= ep) {
+				cnt++;
+			}
+		}
+		return (double) cnt / (double) other.length();
+	}
+	
+	
 //	public boolean contains(Transition trn) {
 //		return (this.s <= trn.s && this.e >= trn.e);
 //	}
@@ -58,7 +99,7 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 	}
 	
 	public String toString() {
-		return traj.uid+"["+s+":"+e+"]"+pattern.toString();
+		return traj.uid+"["+s+":"+e+"]"+pattern.toString()+"(delta="+density+")";
 	}
 
 
@@ -108,6 +149,11 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 			return 1;
 		else 
 			return (this.s - o.s);
+	}
+
+	public void computePdensity(double sumRatio) {
+		double penalty = (double) this.pattern.length() / (double) this.length();
+		this.density = 	sumRatio * penalty;
 	}
 
 }

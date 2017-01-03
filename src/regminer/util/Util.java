@@ -68,6 +68,22 @@ public class Util {
 	}
 	
 	
+	public static double distPointLinesegment(Point p1, Point p2, Point p) {
+		double dist = p1.distance(p2);
+		if (dist > 0) {
+		
+			double doubleArea = Math.abs((p2.y-p1.y)*p.x - (p2.x-p1.x)*p.y + p2.x*p1.y - p2.y*p1.x);
+			dist = doubleArea/dist;
+
+			dist = Math.min(dist, p.distance(p1));
+			dist = Math.min(dist, p.distance(p2));
+		}
+		
+		Debug._TestDouble(dist);
+		return dist;
+	}
+	
+	
 	public static long getCpuTime() {
 		ThreadMXBean bean = ManagementFactory.getThreadMXBean();
 		return bean.isCurrentThreadCpuTimeSupported()?

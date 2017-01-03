@@ -2,6 +2,8 @@ package regminer.struct;
 
 import java.util.Objects;
 
+import regminer.util.Util;
+
 /**
  * @author Dong-Wan Choi at SFU, CA
  * @class Edge
@@ -20,9 +22,9 @@ public class Edge {
 	}
 	
 	//TODO: implement this!
-	public double distTo(Place p)
+	public double distance(Place p)
 	{
-		return 0.0;
+		return Util.distPointLinesegment(src.loc, dst.loc, p.loc);
 	}
 
 	@Override
