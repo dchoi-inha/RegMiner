@@ -12,6 +12,7 @@ import regminer.struct.PRegion;
 import regminer.struct.Place;
 import regminer.struct.Trajectory;
 import regminer.struct.Visit;
+import regminer.util.Debug;
 import regminer.util.Env;
 import regminer.util.Util;
 
@@ -30,8 +31,11 @@ public class Main {
 		Set<String> C;
 		double ep, sg;
 		
+		Debug._PrintL("sg: " + Env.sg +"  ep:" + Env.ep + "  BlockSize: " + Env.B);
+
+		
 		P = loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/places.txt");
-		T = loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/check-ins.txt");
+		T = loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/check-ins-sample.txt");
 		C = loadCategories();
 		ep = Env.ep;
 		sg = Env.sg;
@@ -49,6 +53,7 @@ public class Main {
 	}
 	
 	public static ArrayList<Trajectory> loadTrajectories(String fpath) {
+		Debug._PrintL("----Start loading trajectories----");
 		ArrayList<Trajectory> tras = new ArrayList<Trajectory>();
 
 		BufferedReader in;
@@ -83,12 +88,15 @@ public class Main {
 			e.printStackTrace();
 		} 
 
-
+		Debug._PrintL("# trajectories: " + tras.size());
+		Debug._PrintL("----Complete loading trajectories----\n");
 		return tras;
 	}
 
 
 	public static ArrayList<Place> loadPOIs(String fpath)  {
+
+		Debug._PrintL("----Start loading POIs----");
 
 		ArrayList<Place> POIs = new ArrayList<Place>();
 
@@ -120,13 +128,14 @@ public class Main {
 				POIs.add(p);
 			}
 			
-			Util.convertToXY(POIs);
+			Env.ScaleRatio = Util.convertToXY(POIs);
 			in.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		} 
 
-
+		Debug._PrintL("# POIs: " + POIs.size() +"  Scale Ratio: " + Env.ScaleRatio + "  # categories: " + Env.Cate_Id.size());
+		Debug._PrintL("----Complete loading POIs----\n");
 		return POIs;
 	}
 	

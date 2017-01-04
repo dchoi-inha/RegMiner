@@ -5,6 +5,7 @@ import java.util.*;
 import regminer.rtree.RTree;
 import regminer.struct.*;
 import regminer.util.Debug;
+import regminer.util.Env;
 
 /**
  * @author Dong-Wan Choi at Imperial College London
@@ -30,24 +31,38 @@ public class SkeletonRegMiner extends Miner {
 		for (Tset trnSet: freqTrnSets) {
 			if (trnSet.pattern.length() != 2) continue; //TODO: just for debug, to be deleted
 			Pattern seq = trnSet.pattern;			
-			System.out.println(seq + "("+trnSet.size()+")");
 
 			// construct the R-tree on POIs in trnSet
 			RTree rt = new RTree();
-			for (Place p: trnSet.places) {
+			HashSet<Place> places = trnSet.computePOIs();
+			for (Place p: places) {
+				p.clearPostings();
 				rt.insert(p);
 			}
-			System.out.print("Nodes : "+rt.nodes+" heights: "+rt.height+"\n");
+			Debug._PrintL("Nodes : "+rt.nodes+" heights: "+rt.height+"\n");
+			
+			// construct the inverted list of posting transitions
+			for (Transition trn: trnSet) {
+				trn.addPostings();
+			}
+			// TODO: DEBUG: test for null postingList
+				for (Place p: places) {
+					if (p.postingTrns == null) {
+						Debug._Error(this, "Why....null postings" + p.toString());
+					}
+				}
 
 			ArrayList<Tset> clusters = pDBSCAN(trnSet, rt);
 			
-			System.out.println("Cluster size:" + clusters.size());
+			System.out.println(seq + "("+trnSet.size()+")");
+			if (clusters.size() > 3) {
+				Debug._PrintL("Cluster size:" + clusters.size());
 
-			for (Tset cluster: clusters) {
-				results.add(new PRegion(cluster));
+				for (Tset cluster: clusters) {
+					results.add(new PRegion(cluster));
+				}
+				break;
 			}
-			
-			if (results.size() > 0) break;
 		}
 
 		return results;
@@ -76,7 +91,8 @@ public class SkeletonRegMiner extends Miner {
 			prefixSpan(output, freqCateSet, seq, tSet);
 		}
 
-		Debug._PrintL("----End compactGrow----");
+		Debug._PrintL("# freq patterns: " + output.size());
+		Debug._PrintL("----End compactGrow----\n");
 	}
 
 	// grow seq and tSet
@@ -111,7 +127,7 @@ public class SkeletonRegMiner extends Miner {
 			}
 		}
 		for (String cate: this.cateSet) {
-			if (cateFreq.get(cate) >= this.sg) freqCateSet.add(cate);
+			if (cateFreq.containsKey(cate) && cateFreq.get(cate) >= this.sg) freqCateSet.add(cate);
 		}
 		return freqCateSet;
 	}
@@ -159,8 +175,10 @@ public class SkeletonRegMiner extends Miner {
 			if (processed.contains(trn)) continue;
 
 			processed.add(trn);
-			NeighborTset neighborTrns = getNeighbors(trn, trnSet);
+//			NeighborTset neighborTrns = getNeighbors(trn, trnSet);
+			NeighborTset neighborTrns = getNeighbors(trn, rt);
 			trn.computePdensity(neighborTrns.sumRatio);
+			trn.neighbors = neighborTrns;
 
 			if (trn.density >= this.sg) {
 				Tset cluster = new Tset(trnSet.pattern); //TODO: Tset.add() can be overhead...in this case
@@ -171,8 +189,10 @@ public class SkeletonRegMiner extends Miner {
 					Transition neighbor = neighborTrns.get(i);
 					if (!processed.contains(neighbor)) {
 						processed.add(neighbor);
-						NeighborTset newNeighborTrns = getNeighbors(neighbor, trnSet);
+//						NeighborTset newNeighborTrns = getNeighbors(neighbor, trnSet);
+						NeighborTset newNeighborTrns = getNeighbors(neighbor, rt);
 						neighbor.computePdensity(newNeighborTrns.sumRatio);
+						neighbor.neighbors = newNeighborTrns;
 						if (neighbor.density >= this.sg) {
 							cluster.add(neighbor);
 							neighborTrns.mergeWith(newNeighborTrns);
@@ -185,11 +205,24 @@ public class SkeletonRegMiner extends Miner {
 
 		return clusters;
 	}
+	
+	public NeighborTset getNeighbors(Transition trn, RTree rt) {
+		NeighborTset neighbors = new NeighborTset(trn.pattern);
+		
+		HashMap<Transition, Integer> neighborFreqs = rt.neighborhoodSearch(trn, this.ep);
+		
+		for (Transition neighbor: neighborFreqs.keySet()) {
+			double ratio = (double) neighborFreqs.get(neighbor) / (double) neighbor.length();
+			neighbors.add(neighbor, ratio);
+		}
+		
+		return neighbors;
+	}
 
 	public NeighborTset getNeighbors(Transition trn, Tset trnSet) {
 		NeighborTset neighbors = new NeighborTset(trnSet.pattern);
 		for (Transition other: trnSet) {
-			double ratio = trn.contRatio(other, this.ep);
+			double ratio = trn.computeRatio(other, this.ep);
 			if (ratio > 0) {
 				neighbors.add(other, ratio);
 			}

@@ -31,13 +31,14 @@ import javafx.stage.Stage;
 import regminer.Main;
 import regminer.algorithm.Miner;
 import regminer.algorithm.SkeletonRegMiner;
-import regminer.struct.Edge;
+import regminer.struct.NeighborTset;
 import regminer.struct.PRegion;
 import regminer.struct.Place;
 import regminer.struct.Trajectory;
 import regminer.struct.Transition;
 import regminer.struct.Tset;
 import regminer.struct.Visit;
+import regminer.util.Debug;
 import regminer.util.Env;
 import regminer.util.Util;
 
@@ -77,41 +78,42 @@ public class MainApp extends Application implements MapComponentInitializedListe
 		.scaleControl(true)
 		.streetViewControl(true)
 		.zoomControl(false)
-		.zoom(11);
+		.zoom(15);
 
 		map = mapView.createMap(mapOptions);
-		
 		
 		ArrayList<Place> P;
 		ArrayList<Trajectory> T;
 		Set<String> C;
 		double ep, sg;
+		Debug._PrintL("sg: " + Env.sg +"  ep:" + Env.ep + "  BlockSize: " + Env.B);
 
 		P = Main.loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/places.txt");
-		T = Main.loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/check-ins.txt");
+		T = Main.loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/check-ins-sample.txt");
 		C = Main.loadCategories();
 		ep = Env.ep;
 		sg = Env.sg;
 
-//		printTrajectories(T);
 		
+		long cpuTimeElapsed;
+		double [] t = new double[1];
+		
+	
 		Miner skeleton = new SkeletonRegMiner(P, T, C, ep, sg);
+		cpuTimeElapsed = Util.getCpuTime();
 		ArrayList<PRegion> results = skeleton.mine();
-		
+		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[0] = cpuTimeElapsed/(double)1000000000;
+	
 		for (PRegion pRegion: results) {
-			if (!pRegion.P.isEmpty()) {
+			if (pRegion.P.size() > 5) {
 				System.out.println(pRegion);
 				printTrns(pRegion.trns);
-				for (Place p: pRegion.P) {
-					MarkerOptions markerOptions = new MarkerOptions();
-					setMarkerIcon(p, markerOptions); 
-					Marker marker = new Marker(markerOptions);
-					map.addMarker(marker);
-				}
+//				break;
 			}
 		}
 		
-
+		Debug._PrintL("Elapsed time: " + t[0]);
+		
 	}
 	
 	public void printTrns(Tset trns) {
@@ -120,13 +122,17 @@ public class MainApp extends Application implements MapComponentInitializedListe
 		for (Transition trn: trns)
 		{
 
-//			if (k++ % 100 != 0) continue;
+//			if (k > 2) continue;
 						
 			k++;
 			System.out.print(trn.toString()+ "(");
 
 			ArrayList<LatLong> path = new ArrayList<LatLong>();
 			PolylineOptions lineOptions = new PolylineOptions();
+			
+			String colorStr = Color.rgb(rand.nextInt(256), rand.nextInt(256), rand.nextInt(256)).toString();
+			colorStr = colorStr.replace("0x", "#");
+			colorStr = colorStr.replace("ff", "");
 
 			for (int i = 0; i < trn.visits.size(); i++) 
 			{
@@ -139,18 +145,60 @@ public class MainApp extends Application implements MapComponentInitializedListe
 					setMarkerIcon(p, markerOptions); 
 					Marker marker = new Marker(markerOptions);
 					map.addMarker(marker);
+
+					if (k % 100 == 0) {
+						CircleOptions circleOptions = new CircleOptions();
+						String colorStr2 = Color.rgb(255, 255, 255).toString();
+						colorStr2 = colorStr2.replace("0x", "#");
+						colorStr2 = colorStr2.replace("ff", "");
+						circleOptions.center(new LatLong(p.lat, p.lon)).radius(Env.ScaleRatio*Env.ep*11).fillColor(colorStr2);
+						Circle circle = new Circle(circleOptions);
+						map.addMapShape(circle);
+//						printNeighbors(trn.visits.get(i).place, trn.neighbors, colorStr);
+					}
 					
-					CircleOptions circleOptions = new CircleOptions();
-					circleOptions.center(new LatLong(p.lat, p.lon)).radius(0.1);
-					Circle circle = new Circle();
-					
-					//TODO: draw circle....
 				}
 			}
 			System.out.println(")");
-			String colorStr = Color.rgb(rand.nextInt(256), rand.nextInt(256), rand.nextInt(256)).toString();
-			colorStr = colorStr.replace("0x", "#");
-			colorStr = colorStr.replace("ff", "");
+			
+			lineOptions.path(new MVCArray(path.toArray()))
+			.geodesic(true)
+			.strokeWeight(1.0)
+			.strokeColor(colorStr);
+			
+			Polyline line = new Polyline(lineOptions);
+			
+			map.addMapShape(line);
+			
+
+		}
+	}
+
+
+	private void printNeighbors(Place origin, NeighborTset neighbors, String colorStr) {
+		for (Transition neighbor: neighbors) {
+			ArrayList<LatLong> path = new ArrayList<LatLong>();
+			PolylineOptions lineOptions = new PolylineOptions();
+			for (Visit visit: neighbor.visits) {
+				Place p = visit.place;
+				PolylineOptions neighborLineOptions = new PolylineOptions();
+				ArrayList<LatLong> path2 = new ArrayList<LatLong>();
+				path2.add(new LatLong(origin.lat, origin.lon));
+				path2.add(new LatLong(p.lat, p.lon));
+				neighborLineOptions.path(new MVCArray(path2.toArray()))
+				.geodesic(true).strokeWeight(1.0).strokeColor(colorStr);
+				Polyline neighborLine = new Polyline(neighborLineOptions);
+				map.addMapShape(neighborLine);
+				if (p != null) {
+					path.add(new LatLong(p.lat, p.lon));
+					MarkerOptions markerOptions = new MarkerOptions();
+					markerOptions.position( new LatLong(p.lat, p.lon) )
+					.icon("icon/dot.png")
+					.title("N (" + origin.id +")" + p.loc); 
+					Marker marker = new Marker(markerOptions);
+					map.addMarker(marker);
+				}
+			}
 			
 			lineOptions.path(new MVCArray(path.toArray()))
 			.geodesic(true)
@@ -161,9 +209,8 @@ public class MainApp extends Application implements MapComponentInitializedListe
 			Polyline line = new Polyline(lineOptions);
 			
 			map.addMapShape(line);
-			
-
 		}
+		
 	}
 
 
@@ -188,7 +235,7 @@ public class MainApp extends Application implements MapComponentInitializedListe
 					System.out.print(p.category + "->");		
 					path.add(new LatLong(p.lat, p.lon));
 					MarkerOptions markerOptions = new MarkerOptions();
-					setMarkerIcon(p, markerOptions); 
+					setMarkerIcon(p, markerOptions);
 					Marker marker = new Marker(markerOptions);
 					map.addMarker(marker);
 				}
@@ -216,35 +263,35 @@ public class MainApp extends Application implements MapComponentInitializedListe
 		if (venue.category.contains("Coffee")) {
 			markerOptions.position( new LatLong(venue.lat, venue.lon) )
 			.icon("icon/coffee.png")
-			.title(venue.category + venue.loc);
+			.title(venue.toString());
 		} else if (venue.category.contains("Office")) {
 			markerOptions.position( new LatLong(venue.lat, venue.lon) )
 			.icon("icon/office.png")
-			.title(venue.category + venue.loc);
+			.title(venue.toString());
 		} else if (venue.category.contains("Home")) {
 			markerOptions.position( new LatLong(venue.lat, venue.lon) )
 			.icon("icon/home.png")
-			.title(venue.category + venue.loc);
+			.title(venue.toString());
 		} else if (venue.category.contains("College")) {
 			markerOptions.position( new LatLong(venue.lat, venue.lon) )
 			.icon("icon/school.png")
-			.title(venue.category + venue.loc);
+			.title(venue.toString());
 		} else if (venue.category.contains("Restaurant")) {
 			markerOptions.position( new LatLong(venue.lat, venue.lon) )
 			.icon("icon/restaurant.png")
-			.title(venue.category + venue.loc);
+			.title(venue.toString());
 		} else if (venue.category.contains("School")) {
 			markerOptions.position( new LatLong(venue.lat, venue.lon) )
 			.icon("icon/school.png")
-			.title(venue.category + venue.loc);
+			.title(venue.toString());
 		} else if (venue.category.contains("Bank")) {
 			markerOptions.position( new LatLong(venue.lat, venue.lon) )
 			.icon("icon/bank.png")
-			.title(venue.category + venue.loc);
+			.title(venue.toString());
 		} else {
 			markerOptions.position( new LatLong(venue.lat, venue.lon) )
 			.icon("icon/dot.png")
-			.title(venue.category + venue.loc);
+			.title(venue.toString());
 		}
 	}
 

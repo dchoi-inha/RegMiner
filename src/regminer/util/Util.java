@@ -20,13 +20,17 @@ public class Util {
 //	    return point;
 //	}
 	
-	public static void convertToXY(ArrayList<Place> POIs)
+	public static double convertToXY(ArrayList<Place> POIs)
 	{
 		double minLat = Double.MAX_VALUE;
 		double minLon = Double.MAX_VALUE;
+		double maxLat = Double.MIN_VALUE;
+		double maxLon = Double.MIN_VALUE;
 		for (Place poi: POIs) {
 			minLat = Math.min(minLat, poi.lat);
 			minLon = Math.min(minLon, poi.lon);
+			maxLat = Math.max(maxLat, poi.lat);
+			maxLon = Math.max(maxLon, poi.lon);
 		}
 		
 		double minX = Double.MAX_VALUE;
@@ -44,12 +48,15 @@ public class Util {
 			poi.setLoc(x, y);
 		}
 		
+		double scaleRatio = getDistLatLon(minLat, minLon, maxLat, maxLon)/Math.sqrt(Math.pow(maxX-minX, 2)+Math.pow(maxY-minY, 2));
+		
 		for (Place poi: POIs) {
 			double x = (poi.loc.getX() - minX) * Env.MaxCoord / (maxX-minX);
 			double y = (poi.loc.getY() - minY) * Env.MaxCoord / (maxY-minY);
 			poi.setLoc(x, y);
 		}
 		
+		return scaleRatio*Math.min((maxX-minX)/Env.MaxCoord, (maxY-minY)/Env.MaxCoord);			
 	}
 	private static double getDistLatLon(double lat1, double lon1, double lat2, double lon2)
 	{

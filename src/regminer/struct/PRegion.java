@@ -15,7 +15,7 @@ public class PRegion {
 	public Tset trns;
 	
 	public PRegion(Tset trns) {
-		P = trns.places;
+		P = trns.computePOIs();
 		S = trns.pattern;
 		this.trns = trns;
 	}

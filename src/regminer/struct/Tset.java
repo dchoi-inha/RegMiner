@@ -14,28 +14,37 @@ public class Tset implements Iterable<Transition>{
 
 	public Pattern pattern;
 	public ArrayList<Transition> trns;
-	public HashSet<Place> places;
+//	public HashSet<Place> places;
 	
 	
 	public Tset(Pattern pattern)
 	{
 		this.pattern = pattern;
 		this.trns = new ArrayList<Transition>();
-		this.places = new HashSet<Place>();
+//		this.places = new HashSet<Place>();
 	}
 	
 	public void add(Transition trn) {
 		trns.add(trn);
-		places.addAll(trn.computePOIs());
+//		places.addAll(trn.computePOIs());
 	}
+	
 	
 	public Transition get(int i) {
 		return trns.get(i);
 	}
 	
+	public HashSet<Place> computePOIs() {
+		HashSet<Place> places = new HashSet<Place>();
+		for (Transition trn: trns) {
+			places.addAll(trn.computePOIs());
+		}
+		return places;
+	}
+	
 	public void mergeWith(Tset tSet) {
 		trns.addAll(tSet.trns);
-		places.addAll(tSet.places);
+//		places.addAll(tSet.places);
 	}
 	
 	public int size(){

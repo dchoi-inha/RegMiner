@@ -2,11 +2,15 @@ package regminer.rtree;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.PriorityQueue;
 
+import regminer.util.Debug;
 import regminer.util.Env;
+import regminer.struct.NeighborTset;
 import regminer.struct.Place;
 import regminer.struct.Point;
+import regminer.struct.Transition;
 
 public class RTree {
 	public static final int M = (int) Math.floor(Env.B/Entry.size);
@@ -48,6 +52,48 @@ public class RTree {
 		_search(R, xl, xh, yl, yh, result);
 
 		return result;
+	}
+	
+	
+	private void _neighborSearch(Node T, Transition trn, HashMap<Transition, Integer> results, double ep){
+		Entry e;
+		MBR range = trn.getMBR();
+		if (T.isleaf) leafCount++;
+		else nodeCount++;
+		for (int a=0; a<T.size(); a++){
+			e = T.get(a);
+			if (((!(range.x.h<e.x.l || range.x.l>e.x.h))) && (!(range.y.l>e.y.h || range.y.h<e.y.l))){
+				if (T.isleaf){ // leaf
+					Place p = ((LEntry)e).obj;
+					if (trn.distance(p) <= ep) 
+					{
+						if (p.postingTrns == null)
+							Debug._Error(this, "postingTrns is NULL");
+						else {
+							for (Transition neighbor: p.postingTrns)
+							{
+								if (results.containsKey(neighbor)) {
+									int freq = results.get(neighbor);
+									results.put(neighbor, freq+1);
+								}
+								else {
+									results.put(neighbor, 1);
+								}
+							}
+						}
+					}
+				}
+				else _neighborSearch(e.child, trn, results, ep);
+			} 
+		}
+	}
+	public HashMap<Transition, Integer> neighborhoodSearch(Transition trn, double ep) {
+		HashMap<Transition, Integer> results = new HashMap<Transition, Integer>();
+		nodeCount = 0;
+		leafCount = 0;
+		_neighborSearch(R, trn, results, ep);
+
+		return results;
 	}
 
 	public Entry nextNN(Point q, PriorityQueue<Entry> pq) {

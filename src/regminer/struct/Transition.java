@@ -4,6 +4,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
+import regminer.rtree.MBR;
+import regminer.util.Env;
 import regminer.util.Util;
 
 /**
@@ -21,6 +23,9 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 	public int s, e; // [s:e]
 	
 	public double density;
+	public NeighborTset neighbors;
+	
+	private MBR mbr;
 
 	public Transition(Trajectory traj, Pattern pattern, int s, int e)
 	{
@@ -31,6 +36,8 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 		this.e = e;
 		
 		this.density = -1;
+		this.neighbors = null;
+		this.mbr = null;
 	}
 	
 	public HashSet<Place> computePOIs() {
@@ -41,6 +48,18 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 		}
 
 		return places;
+	}
+	
+	public void delPostings() {
+		for (Visit visit: visits) {
+			visit.place.delPostingTrn(this);
+		}
+	}
+	
+	public void addPostings() {
+		for (Visit visit: visits) {
+			visit.place.addPostingTrn(this);
+		}
 	}
 	
 	public int nextPos(String cate) {
@@ -77,31 +96,20 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 		return dist;
 	}
 	
-	public double contRatio(Transition other, double ep) {
-		int cnt = 0;
-		for (Visit v: other) {
-			if (this.distance(v.place) <= ep) {
-				cnt++;
-			}
-		}
-		return (double) cnt / (double) other.length();
-	}
-	
 	
 //	public boolean contains(Transition trn) {
 //		return (this.s <= trn.s && this.e >= trn.e);
 //	}
 	
+	public String toString() {
+		return "T"+ traj.uid+"["+s+":"+e+"]"+pattern.toString()+"(delta="+density+")";
+	}
 
 	@Override
 	public Iterator<Visit> iterator() {
 		return (Iterator<Visit>) visits.iterator();
 	}
 	
-	public String toString() {
-		return traj.uid+"["+s+":"+e+"]"+pattern.toString()+"(delta="+density+")";
-	}
-
 
 	@Override
 	public int hashCode() {
@@ -150,10 +158,33 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 		else 
 			return (this.s - o.s);
 	}
+	
+	public double computeRatio(Transition other, double ep) {
+		int cnt = 0;
+		for (Visit v: other) {
+			if (this.distance(v.place) <= ep) {
+				cnt++;
+			}
+		}
+		return (double) cnt / (double) other.length();
+	}
 
 	public void computePdensity(double sumRatio) {
 		double penalty = (double) this.pattern.length() / (double) this.length();
 		this.density = 	sumRatio * penalty;
+	}
+	
+	public MBR getMBR() {
+		if (this.mbr == null)
+		{
+			this.mbr = new MBR();
+			for (Visit visit: visits) {
+				this.mbr.updateMBR(visit.place.loc);
+			}
+			this.mbr.enlarge(Env.ep);
+		}
+			
+		return this.mbr;
 	}
 
 }

@@ -1,5 +1,6 @@
 package regminer.struct;
 
+import java.util.HashSet;
 
 /**
  * @author Dong-Wan Choi at SFU, CA
@@ -15,12 +16,17 @@ public class Place {
 	public Point loc;
 	public String category;
 	
+	
+	public HashSet<Transition> postingTrns;
+	
 	public Place (String id, double lat, double lon, String category)
 	{
 		this.id = id;
 		this.lat = lat;
 		this.lon = lon;
 		this.category = category;
+		
+		this.postingTrns = null;
 	}
 	public void setLoc(double x, double y)
 	{
@@ -64,6 +70,22 @@ public class Place {
 			return false;
 		}
 		return true;
+	}
+	
+	public void addPostingTrn(Transition transition) {
+		if (this.postingTrns == null) 
+			this.postingTrns = new HashSet<Transition>();
+		
+		postingTrns.add(transition);
+	}
+	public void delPostingTrn(Transition transition) {
+		if (this.postingTrns != null) 
+			postingTrns.remove(transition);
+		
+	}
+	public void clearPostings() {
+		if (this.postingTrns != null) 
+			this.postingTrns.clear();		
 	}
 	
 	
