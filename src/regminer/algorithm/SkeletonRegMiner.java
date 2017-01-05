@@ -31,6 +31,7 @@ public class SkeletonRegMiner extends Miner {
 		for (Tset trnSet: freqTrnSets) {
 			if (trnSet.pattern.length() != 2) continue; //TODO: just for debug, to be deleted
 			Pattern seq = trnSet.pattern;			
+			Debug._PrintL(seq + "("+trnSet.size()+")" + "(" + trnSet.weight() + ")");
 
 			// construct the R-tree on POIs in trnSet
 			RTree rt = new RTree();
@@ -45,23 +46,16 @@ public class SkeletonRegMiner extends Miner {
 			for (Transition trn: trnSet) {
 				trn.addPostings();
 			}
-			// TODO: DEBUG: test for null postingList
-				for (Place p: places) {
-					if (p.postingTrns == null) {
-						Debug._Error(this, "Why....null postings" + p.toString());
-					}
-				}
 
 			ArrayList<Tset> clusters = pDBSCAN(trnSet, rt);
 			
-			System.out.println(seq + "("+trnSet.size()+")");
-			if (clusters.size() > 3) {
+			if (clusters.size() > 1) {
 				Debug._PrintL("Cluster size:" + clusters.size());
 
 				for (Tset cluster: clusters) {
 					results.add(new PRegion(cluster));
 				}
-				break;
+//				break;
 			}
 		}
 
@@ -102,7 +96,7 @@ public class SkeletonRegMiner extends Miner {
 		{
 			Tset tSetP = transitionGrow(tSet, seq, cate);
 
-			if (tSetP.size() >= this.sg) {
+			if (tSetP.weight() >= this.sg) {
 				output.add(tSetP);
 				prefixSpan(output, freqCateSet, tSetP.pattern, tSetP);
 			}
@@ -177,10 +171,10 @@ public class SkeletonRegMiner extends Miner {
 			processed.add(trn);
 //			NeighborTset neighborTrns = getNeighbors(trn, trnSet);
 			NeighborTset neighborTrns = getNeighbors(trn, rt);
-			trn.computePdensity(neighborTrns.sumRatio);
+			trn.setDensity(neighborTrns.density());
 			trn.neighbors = neighborTrns;
 
-			if (trn.density >= this.sg) {
+			if (trn.density() >= this.sg) {
 				Tset cluster = new Tset(trnSet.pattern); //TODO: Tset.add() can be overhead...in this case
 				clusters.add(cluster);
 				cluster.add(trn);
@@ -191,9 +185,9 @@ public class SkeletonRegMiner extends Miner {
 						processed.add(neighbor);
 //						NeighborTset newNeighborTrns = getNeighbors(neighbor, trnSet);
 						NeighborTset newNeighborTrns = getNeighbors(neighbor, rt);
-						neighbor.computePdensity(newNeighborTrns.sumRatio);
+						neighbor.setDensity(newNeighborTrns.density());
 						neighbor.neighbors = newNeighborTrns;
-						if (neighbor.density >= this.sg) {
+						if (neighbor.density() >= this.sg) {
 							cluster.add(neighbor);
 							neighborTrns.mergeWith(newNeighborTrns);
 						}
@@ -215,7 +209,7 @@ public class SkeletonRegMiner extends Miner {
 			double ratio = (double) neighborFreqs.get(neighbor) / (double) neighbor.length();
 			neighbors.add(neighbor, ratio);
 		}
-		
+		Debug._PrintL("T"+ trn.traj.uid+"["+trn.s+":"+trn.e+"]" + neighbors.toString());
 		return neighbors;
 	}
 
@@ -227,6 +221,8 @@ public class SkeletonRegMiner extends Miner {
 				neighbors.add(other, ratio);
 			}
 		}
+		
+		Debug._PrintL("T"+ trn.traj.uid+"["+trn.s+":"+trn.e+"]" + neighbors.toString());
 		return neighbors;
 	}
 

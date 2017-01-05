@@ -16,17 +16,21 @@ public class Tset implements Iterable<Transition>{
 	public ArrayList<Transition> trns;
 //	public HashSet<Place> places;
 	
+	private double weight;
+	
 	
 	public Tset(Pattern pattern)
 	{
 		this.pattern = pattern;
 		this.trns = new ArrayList<Transition>();
 //		this.places = new HashSet<Place>();
+		this.weight = 0;
 	}
 	
 	public void add(Transition trn) {
 		trns.add(trn);
 //		places.addAll(trn.computePOIs());
+		weight += trn.weight();
 	}
 	
 	
@@ -44,11 +48,16 @@ public class Tset implements Iterable<Transition>{
 	
 	public void mergeWith(Tset tSet) {
 		trns.addAll(tSet.trns);
+		weight += tSet.weight();
 //		places.addAll(tSet.places);
 	}
 	
 	public int size(){
 		return trns.size();
+	}
+	
+	public double weight() {
+		return weight;
 	}
 
 	public String toString() {

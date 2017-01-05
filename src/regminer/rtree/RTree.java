@@ -62,7 +62,7 @@ public class RTree {
 		else nodeCount++;
 		for (int a=0; a<T.size(); a++){
 			e = T.get(a);
-			if (((!(range.x.h<e.x.l || range.x.l>e.x.h))) && (!(range.y.l>e.y.h || range.y.h<e.y.l))){
+			if (((!(range.x.h<=e.x.l || range.x.l>=e.x.h))) && (!(range.y.l>=e.y.h || range.y.h<=e.y.l))){
 				if (T.isleaf){ // leaf
 					Place p = ((LEntry)e).obj;
 					if (trn.distance(p) <= ep) 

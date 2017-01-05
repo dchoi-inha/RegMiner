@@ -22,7 +22,7 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 	public Pattern pattern;
 	public int s, e; // [s:e]
 	
-	public double density;
+	private double density;
 	public NeighborTset neighbors;
 	
 	private MBR mbr;
@@ -96,6 +96,17 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 		return dist;
 	}
 	
+	public double weight() {
+		return 1.0/ (double) ((length()-pattern.length()) + 1.0);
+	}
+	
+	public double density() {
+		return density;
+	}
+	
+	public void setDensity(double density) {
+		this.density = density;
+	}
 	
 //	public boolean contains(Transition trn) {
 //		return (this.s <= trn.s && this.e >= trn.e);
@@ -169,11 +180,6 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 		return (double) cnt / (double) other.length();
 	}
 
-	public void computePdensity(double sumRatio) {
-		double penalty = (double) this.pattern.length() / (double) this.length();
-		this.density = 	sumRatio * penalty;
-	}
-	
 	public MBR getMBR() {
 		if (this.mbr == null)
 		{

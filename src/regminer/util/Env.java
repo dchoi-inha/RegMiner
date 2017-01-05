@@ -24,6 +24,6 @@ public class Env {
 	
 	public static double ScaleRatio = 1.0;
 	
-	public final static double ep = 0.005;
-	public final static double sg = 500;
+	public final static double ep = 0.09;
+	public final static double sg = 10;
 }

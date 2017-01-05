@@ -11,25 +11,32 @@ import java.util.ArrayList;
 public class NeighborTset extends Tset {
 
 	public ArrayList<Double> ratios;
-	public double sumRatio;
+	private double density;
 	
 	public NeighborTset(Pattern pattern) {
 		super(pattern);
 		ratios = new ArrayList<Double>();
-		sumRatio = 0.0;
+		density = 0.0;
 	}
 
 	public void add(Transition trn, double ratio) {
 		super.add(trn);
 		ratios.add(ratio);
-		sumRatio += ratio;
+		density += ratio*trn.weight();
 	}
 	
 	public void mergeWith(NeighborTset nTset) {
 		super.mergeWith(nTset);
 		ratios.addAll(nTset.ratios);
-		sumRatio += nTset.sumRatio;
+		density += nTset.density;
 	}
 	
+	public double density() {
+		return density;
+	}
+	
+	public String toString() {
+		return super.pattern + "(size=" + super.size() + "  weight=" + super.weight()+ "  density=" + density + ")"; 
+	}
 	
 }
