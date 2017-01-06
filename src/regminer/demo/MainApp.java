@@ -88,8 +88,8 @@ public class MainApp extends Application implements MapComponentInitializedListe
 		double ep, sg;
 		Debug._PrintL("sg: " + Env.sg +"  ep:" + Env.ep + "  BlockSize: " + Env.B);
 
-		P = Main.loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/places.txt");
-		T = Main.loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/check-ins-sample.txt");
+		P = Main.loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/gowalla/places.txt");
+		T = Main.loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/gowalla/check-ins-sample.txt");
 		C = Main.loadCategories();
 		ep = Env.ep;
 		sg = Env.sg;

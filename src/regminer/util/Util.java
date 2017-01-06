@@ -76,18 +76,42 @@ public class Util {
 	
 	
 	public static double distPointLinesegment(Point p1, Point p2, Point p) {
-		double dist = p1.distance(p2);
-		if (dist > 0) {
+		double dist;
 		
-			double doubleArea = Math.abs((p2.y-p1.y)*p.x - (p2.x-p1.x)*p.y + p2.x*p1.y - p2.y*p1.x);
-			dist = doubleArea/dist;
-
-			dist = Math.min(dist, p.distance(p1));
-			dist = Math.min(dist, p.distance(p2));
+		if (isProjectedPointOnLineSegment(p1, p2, p)) {
+			dist =  projectedDist(p1, p2, p);
 		}
+		else
+			dist =  Math.min(p.distance(p2), p.distance(p1));
+		
 		
 		Debug._TestDouble(dist);
 		return dist;
+	}
+	
+	public static double projectedDist(Point p1, Point p2, Point p) {
+		double dist = p1.distance(p2);
+		if (dist <= 0) {
+			return Math.min(p.distance(p2), p.distance(p1));
+		}
+		else {
+			double doubleArea = Math.abs((p2.y-p1.y)*p.x - (p2.x-p1.x)*p.y + p2.x*p1.y - p2.y*p1.x);
+			return doubleArea/dist;
+		}
+	}
+	
+	public static boolean isProjectedPointOnLineSegment(Point v1, Point v2, Point p)
+	{
+	  Point e1 = new Point(v2.x - v1.x, v2.y - v1.y);
+	  double recArea = dotProduct(e1, e1);
+	  // dot product of |e1| * |e2|
+	  Point e2 = new Point(p.x - v1.x, p.y - v1.y);
+	  double val = dotProduct(e1, e2);
+	  return (val > 0 && val < recArea);
+	}
+	
+	public static double dotProduct(Point v1, Point v2) {
+		return ((v1.x*v2.x) + (v1.y*v2.y));
 	}
 	
 	

@@ -113,7 +113,19 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 //	}
 	
 	public String toString() {
-		return "T"+ traj.uid+"["+s+":"+e+"]"+pattern.toString()+"(delta="+density+")";
+		String str = "T"+ traj.uid+"["+s+":"+e+"]"+pattern.toString()+"(delta="+density+")"; 
+//		str += "\n" + strPOIs();
+		
+		return str;
+	}
+	
+	public String strPOIs() {
+		String str = "";
+		
+		for (Visit v: visits) {
+			str += v.place.loc.toString()+" ";
+		}
+		return str;
 	}
 
 	@Override

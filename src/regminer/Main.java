@@ -34,8 +34,8 @@ public class Main {
 		Debug._PrintL("sg: " + Env.sg +"  ep:" + Env.ep + "  BlockSize: " + Env.B);
 
 		
-		P = loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/places.txt");
-		T = loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/check-ins-sample.txt");
+		P = loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/gowalla/places.txt");
+		T = loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/gowalla/check-ins.txt");
 		C = loadCategories();
 		ep = Env.ep;
 		sg = Env.sg;
@@ -74,7 +74,12 @@ public class Main {
 				for (int i=0; i < checkins.length; i++)
 				{
 					String [] checkin = checkins[i].split(",");
-					Visit visit = new Visit(checkin[0], checkin[1]);
+					
+					Visit visit;
+					if(checkin.length > 1)
+						visit = new Visit(checkin[0], checkin[1]);
+					else
+						visit = new Visit(checkin[0]);
 
 					if (visit.place != null && (prev == null || !prev.place.equals(visit.place))) {
 						traj.add(visit);

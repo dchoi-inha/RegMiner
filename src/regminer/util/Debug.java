@@ -14,7 +14,7 @@ import java.io.*;
  */
 public class Debug {
 	
-	public static boolean flag = false;
+	public static boolean flag = true;
 	public static String logFileName = Env.HomeDir + "/logs/regminer.log";
 	
 	public static void _PrintL(String str) {

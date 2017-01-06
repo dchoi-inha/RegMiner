@@ -1,5 +1,6 @@
 package regminer.struct;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 
 /**
@@ -17,7 +18,7 @@ public class Place {
 	public String category;
 	
 	
-	public HashSet<Transition> postingTrns;
+	private ArrayList<Transition> postingTrns; // why not a set? Since it shoud contain multiple transitions.
 	
 	public Place (String id, double lat, double lon, String category)
 	{
@@ -74,7 +75,7 @@ public class Place {
 	
 	public void addPostingTrn(Transition transition) {
 		if (this.postingTrns == null) 
-			this.postingTrns = new HashSet<Transition>();
+			this.postingTrns = new ArrayList<Transition>();
 		
 		postingTrns.add(transition);
 	}
@@ -86,6 +87,10 @@ public class Place {
 	public void clearPostings() {
 		if (this.postingTrns != null) 
 			this.postingTrns.clear();		
+	}
+	
+	public ArrayList<Transition> postingTrns() {
+		return postingTrns;
 	}
 	
 	

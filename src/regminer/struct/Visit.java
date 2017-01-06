@@ -24,6 +24,12 @@ public class Visit {
 		this.place = Env.Place_Map.get(pid);
 	}
 	
+	public Visit(String pid) throws ParseException
+	{
+		this.time = null;
+		this.place = Env.Place_Map.get(pid);
+	}
+	
 	public String toString()
 	{
 		return place.toString();

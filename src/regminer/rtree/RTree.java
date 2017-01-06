@@ -62,15 +62,15 @@ public class RTree {
 		else nodeCount++;
 		for (int a=0; a<T.size(); a++){
 			e = T.get(a);
-			if (((!(range.x.h<=e.x.l || range.x.l>=e.x.h))) && (!(range.y.l>=e.y.h || range.y.h<=e.y.l))){
+			if (((!(range.x.h<e.x.l || range.x.l>e.x.h))) && (!(range.y.l>e.y.h || range.y.h<e.y.l))){
 				if (T.isleaf){ // leaf
 					Place p = ((LEntry)e).obj;
 					if (trn.distance(p) <= ep) 
 					{
-						if (p.postingTrns == null)
+						if (p.postingTrns() == null)
 							Debug._Error(this, "postingTrns is NULL");
 						else {
-							for (Transition neighbor: p.postingTrns)
+							for (Transition neighbor: p.postingTrns())
 							{
 								if (results.containsKey(neighbor)) {
 									int freq = results.get(neighbor);
