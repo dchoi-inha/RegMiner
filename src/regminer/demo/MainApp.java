@@ -88,8 +88,8 @@ public class MainApp extends Application implements MapComponentInitializedListe
 		double ep, sg;
 		Debug._PrintL("sg: " + Env.sg +"  ep:" + Env.ep + "  BlockSize: " + Env.B);
 
-		P = Main.loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/gowalla/places.txt");
-		T = Main.loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/gowalla/check-ins-sample.txt");
+		P = Main.loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/places.txt");
+		T = Main.loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/check-ins.txt");
 		C = Main.loadCategories();
 		ep = Env.ep;
 		sg = Env.sg;
@@ -143,7 +143,7 @@ public class MainApp extends Application implements MapComponentInitializedListe
 					Marker marker = new Marker(markerOptions);
 					map.addMarker(marker);
 
-//					if (k < 2) {
+					if (k < 2) {
 						CircleOptions circleOptions = new CircleOptions();
 						String colorStr2 = Color.rgb(255, 255, 255).toString();
 						colorStr2 = colorStr2.replace("0x", "#");
@@ -157,7 +157,7 @@ public class MainApp extends Application implements MapComponentInitializedListe
 						Circle circle = new Circle(circleOptions);
 						map.addMapShape(circle);
 //						printNeighbors(trn.visits.get(i).place, trn.neighbors, colorStr);
-//					}
+					}
 					
 				}
 			}

@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 
+import regminer.slist.SLlist;
+
 /**
  * @author Dong-Wan Choi at Imperial College London
  * @class TSet: the set of transitions of a pattern 'pattern'
@@ -18,11 +20,17 @@ public class Tset implements Iterable<Transition>{
 	private double weight;
 	
 	
+	public SLlist listX;
+	public SLlist listY;
+	
 	public Tset(Pattern pattern)
 	{
 		this.pattern = pattern;
 		this.trns = new ArrayList<Transition>();
 		this.weight = 0;
+		
+		this.listX = new SLlist();
+		this.listY = new SLlist();
 	}
 	
 	public void add(Transition trn) {

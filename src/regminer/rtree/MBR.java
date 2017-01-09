@@ -22,6 +22,15 @@ public class MBR {
 		this.y.h = Double.MIN_VALUE;
 	}
 	
+	public MBR(double xl, double xh, double yl, double yh) {
+		this.x = new Pair();
+		this.y = new Pair();
+		this.x.l = xl;
+		this.x.h = xh;
+		this.y.l = yl;
+		this.y.h = yh;
+	}
+	
 	public void updateMBR(Point p) {
 
 		this.x.l = Math.min(this.x.l, p.x);
@@ -35,5 +44,11 @@ public class MBR {
 		this.y.l -= ep;
 		this.x.h += ep;
 		this.y.h += ep;
+	}
+	
+	public String toString() {
+		return "x["	+String.format("%1$.3f", x.l)+","+String.format("%1$.3f", x.h)+"] y["
+					+String.format("%1$.3f", y.l)+","+String.format("%1$.3f", y.h)+"]";	
+
 	}
 }

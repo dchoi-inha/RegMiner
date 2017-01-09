@@ -30,6 +30,7 @@ public class Visit {
 		this.place = Env.Place_Map.get(pid);
 	}
 	
+	
 	public String toString()
 	{
 		return place.toString();

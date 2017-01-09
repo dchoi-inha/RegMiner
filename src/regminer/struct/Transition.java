@@ -23,9 +23,10 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 	public int s, e; // [s:e]
 	
 	private double density;
-	public NeighborTset neighbors;
+	private NeighborTset neighbors;
 	
 	private MBR mbr;
+	private MBR embr;
 
 	public Transition(Trajectory traj, Pattern pattern, int s, int e)
 	{
@@ -38,6 +39,8 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 		this.density = -1;
 		this.neighbors = null;
 		this.mbr = null;
+		
+		this.embr = traj.visits.get(s).embr;
 	}
 	
 	public HashSet<Place> computePOIs() {
@@ -108,12 +111,17 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 		this.density = density;
 	}
 	
+	public void setNeighbors(NeighborTset neighborTrns) {
+		this.neighbors = neighborTrns;
+	}
+	
 //	public boolean contains(Transition trn) {
 //		return (this.s <= trn.s && this.e >= trn.e);
 //	}
 	
 	public String toString() {
-		String str = "T"+ traj.uid+"["+s+":"+e+"]"+pattern.toString()+"(delta="+density+")"; 
+		String str = "T"+ traj.uid+"["+s+":"+e+"]";
+//		String str = "T"+ traj.uid+"["+s+":"+e+"]"+pattern.toString()+"(delta="+density+")"; 
 //		str += "\n" + strPOIs();
 		
 		return str;
@@ -204,5 +212,10 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 			
 		return this.mbr;
 	}
+	
+	public MBR eMBR() {
+		return this.embr;
+	}
+
 
 }

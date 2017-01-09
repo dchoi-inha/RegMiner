@@ -2,10 +2,11 @@ package regminer.algorithm;
 
 import java.util.*;
 
+import regminer.rtree.MBR;
 import regminer.rtree.RTree;
+import regminer.slist.Item;
 import regminer.struct.*;
 import regminer.util.Debug;
-import regminer.util.Env;
 
 /**
  * @author Dong-Wan Choi at Imperial College London
@@ -13,9 +14,9 @@ import regminer.util.Env;
  * @date 21 Dec 2016
  *
  */
-public class SkeletonRegMiner extends Miner {
+public class RegMiner extends Miner {
 
-	public SkeletonRegMiner(ArrayList<Place> places, ArrayList<Trajectory> trajs,
+	public RegMiner(ArrayList<Place> places, ArrayList<Trajectory> trajs,
 			Set<String> cateSet, double ep, double sg) {
 		super(places, trajs, cateSet, ep, sg);
 	}
@@ -23,47 +24,90 @@ public class SkeletonRegMiner extends Miner {
 	@Override
 	public ArrayList<PRegion> mine() {
 		ArrayList<PRegion> results = new ArrayList<PRegion>();
+		ArrayList<Tset> fTrnSets = new ArrayList<Tset>();
 		// 1. Find all frequent patterns along with their sets of transitions
-		ArrayList<Tset> freqTrnSets = new ArrayList<Tset>();
-		compactGrow(freqTrnSets);		
+		HashSet<String> fCates = freqCatesAndCreateMAs();
 
-		// 2. Compute pRegions for each pattern
-		for (Tset trnSet: freqTrnSets) {
-			if (trnSet.pattern.length() == 1) continue; //TODO: just for debug, to be deleted
-			Pattern seq = trnSet.pattern;			
-			Debug._PrintL("\n" + seq + "("+trnSet.size()+")" + "(" + trnSet.weight() + ")");
-
-			// construct the R-tree on POIs in trnSet
-			RTree rt = new RTree();
-			HashSet<Place> places = trnSet.computePOIs();
-			for (Place p: places) {
-				p.clearPostings();
-				rt.insert(p);
-			}
-			Debug._PrintL("Nodes : "+rt.nodes+" heights: "+rt.height+"\n");
-			
-			// construct the inverted list of posting transitions
-			for (Transition trn: trnSet) {
-				trn.addPostings();
-			}
-
-			ArrayList<Tset> clusters = pDBSCAN(trnSet, rt);
-			
-			if (clusters.size() > 1) {
-				Debug._PrintL("Cluster size:" + clusters.size());
-				for (Tset cluster: clusters) {
-					results.add(new PRegion(cluster));
+		// 2. For each frequent category, construct and partition its transition set
+		for (String cate: fCates)
+		{
+			Pattern seq = new Pattern(cate);
+			Tset tSet = new Tset(seq);
+			ArrayList<Item> listItemsX = new ArrayList<Item>();
+			ArrayList<Item> listItemsY = new ArrayList<Item>();
+			for (Trajectory traj: this.trajs) {
+				int idx = traj.pattern.indexOf(cate, 0);
+				while (idx >= 0) {
+					Transition trn = new Transition(traj, seq, idx, idx);
+					tSet.add(trn);
+					Item itemInX = new Item(trn.eMBR().x.l, trn, 1);
+					Item itemOutX = new Item(trn.eMBR().x.h, trn, -1);
+					Item itemInY = new Item(trn.eMBR().y.l, trn, 1);
+					Item itemOutY = new Item(trn.eMBR().y.h, trn, -1);
+					
+					listItemsX.add(itemInX); listItemsX.add(itemOutX);
+					listItemsY.add(itemInY); listItemsY.add(itemOutY);
+					
+					idx = traj.pattern.indexOf(cate, idx+1);
 				}
+				Collections.sort(listItemsX);
+				Collections.sort(listItemsY);
+			}
+			Collections.sort(tSet.trns); // sort only for length-1 patterns
+			fTrnSets.add(tSet); // output length-1 patterns
+			
+			
+			for (Item itemX: listItemsX) {
+				tSet.listX.add(itemX);
+			}
+			
+			for (Item itemY: listItemsY) {
+				tSet.listY.add(itemY);
 			}
 		}
-
+		
+		
+		
+		
 		return results;
+	}
+	
+	
+	// finding all frequent items and construct MAs
+	private HashSet<String> freqCatesAndCreateMAs() {
+		HashMap<String, Integer> cateFreq = new HashMap<String, Integer>();
+		HashSet<String> freqCateSet = new HashSet<String>();
+		int cnt = 0;
+		for (Trajectory traj: this.trajs)
+		{
+			MBR embr = new MBR();
+			for (int i=traj.length()-1; i >= 0; i--) 
+			{
+				Visit v = traj.visits.get(i);
+				embr.updateMBR(v.place.loc);
+				v.embr = new MBR(embr.x.l, embr.x.h, embr.y.l, embr.y.h);
+				
+				String cate = v.place.category;
+				
+				if (cateFreq.containsKey(cate))
+				{
+					cnt = cateFreq.get(cate);
+					cateFreq.put(cate, cnt+1);
+				}
+				else cateFreq.put(cate, 1);
+			}
+		}
+		for (String cate: this.cateSet) {
+			if (cateFreq.containsKey(cate) && cateFreq.get(cate) >= this.sg) 
+				freqCateSet.add(cate);
+		}
+		return freqCateSet;
 	}
 
 
 	public void compactGrow(ArrayList<Tset> output) {
 		Debug._PrintL("----Start compactGrow----");
-		HashSet<String> freqCateSet = freqCategories();
+		HashSet<String> freqCateSet = freqCatesAndCreateMAs();
 
 		for (String cate: freqCateSet)
 		{
@@ -101,28 +145,6 @@ public class SkeletonRegMiner extends Miner {
 		}
 	}
 
-	// finding all frequent items
-	private HashSet<String> freqCategories() {
-		HashMap<String, Integer> cateFreq = new HashMap<String, Integer>();
-		HashSet<String> freqCateSet = new HashSet<String>();
-		int cnt = 0;
-		for (Trajectory traj: this.trajs)
-		{
-			for (String cate: traj.pattern) 
-			{
-				if (cateFreq.containsKey(cate))
-				{
-					cnt = cateFreq.get(cate);
-					cateFreq.put(cate, cnt+1);
-				}
-				else cateFreq.put(cate, 1);
-			}
-		}
-		for (String cate: this.cateSet) {
-			if (cateFreq.containsKey(cate) && cateFreq.get(cate) >= this.sg) freqCateSet.add(cate);
-		}
-		return freqCateSet;
-	}
 
 	private Tset transitionGrow(Tset tSet, Pattern seq, String cate)
 	{
@@ -193,6 +215,7 @@ public class SkeletonRegMiner extends Miner {
 					}
 				}
 			}
+
 		}
 
 		return clusters;
