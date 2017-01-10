@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
-public class Pattern implements Iterable<String>{
+public class Pattern implements Iterable<String> {
 	public ArrayList<String> seq;
 	
 	public Pattern()
@@ -57,5 +57,6 @@ public class Pattern implements Iterable<String>{
 	public Iterator<String> iterator() {
 		return (Iterator<String>) seq.iterator();
 	}
+
 	
 }

@@ -1,7 +1,6 @@
 package regminer.struct;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 
 /**
  * @author Dong-Wan Choi at SFU, CA

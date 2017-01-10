@@ -29,18 +29,16 @@ public class SkeletonRegMiner extends Miner {
 
 		// 2. Compute pRegions for each pattern
 		for (Tset trnSet: freqTrnSets) {
-			if (trnSet.pattern.length() == 1) continue; //TODO: just for debug, to be deleted
 			Pattern seq = trnSet.pattern;			
-			Debug._PrintL("\n" + seq + "("+trnSet.size()+")" + "(" + trnSet.weight() + ")");
 
 			// construct the R-tree on POIs in trnSet
 			RTree rt = new RTree();
 			HashSet<Place> places = trnSet.computePOIs();
 			for (Place p: places) {
-				p.clearPostings();
+				p.clearPostings(); // for each trnSet, clear postings..
 				rt.insert(p);
 			}
-			Debug._PrintL("Nodes : "+rt.nodes+" heights: "+rt.height+"\n");
+//			Debug._PrintL("Nodes : "+rt.nodes+" heights: "+rt.height+"\n");
 			
 			// construct the inverted list of posting transitions
 			for (Transition trn: trnSet) {
@@ -49,7 +47,8 @@ public class SkeletonRegMiner extends Miner {
 
 			ArrayList<Tset> clusters = pDBSCAN(trnSet, rt);
 			
-			if (clusters.size() > 1) {
+			if (clusters.size() > 0) {
+				Debug._PrintL("\n" + seq + "("+trnSet.size()+")" + "(" + trnSet.weight() + ")");
 				Debug._PrintL("Cluster size:" + clusters.size());
 				for (Tset cluster: clusters) {
 					results.add(new PRegion(cluster));
@@ -57,6 +56,9 @@ public class SkeletonRegMiner extends Miner {
 			}
 		}
 
+		Debug._PrintL("");Debug._PrintL("");
+		Debug._PrintL("--------------End of SkeletonRegMine----------");
+		Debug._PrintL("");Debug._PrintL("");
 		return results;
 	}
 
@@ -162,6 +164,7 @@ public class SkeletonRegMiner extends Miner {
 	public ArrayList<Tset> pDBSCAN(Tset trnSet, RTree rt) {
 		ArrayList<Tset> clusters = new ArrayList<Tset>();
 		HashSet<Transition> processed = new HashSet<Transition>();
+		ArrayList<Transition> processing = new ArrayList<Transition>();
 
 		for (Transition trn: trnSet) {
 			if (processed.contains(trn)) continue;
@@ -177,9 +180,11 @@ public class SkeletonRegMiner extends Miner {
 				Tset cluster = new Tset(trnSet.pattern);
 				clusters.add(cluster);
 				cluster.add(trn);
+				processing.clear();
+				processing.addAll(neighborTrns.set);
 
-				for (int i=0; i < neighborTrns.size(); i++) {
-					Transition neighbor = neighborTrns.get(i);
+				for (int i=0; i < processing.size(); i++) {
+					Transition neighbor = processing.get(i);
 					if (!processed.contains(neighbor)) {
 						processed.add(neighbor);
 //						NeighborTset newNeighborTrns = getNeighbors(neighbor, trnSet);
@@ -188,7 +193,7 @@ public class SkeletonRegMiner extends Miner {
 						neighbor.setNeighbors(newNeighborTrns);
 						if (neighbor.density() >= this.sg) {
 							cluster.add(neighbor);
-							neighborTrns.mergeWith(newNeighborTrns);
+							processing.addAll(newNeighborTrns.set);
 						}
 					}
 				}

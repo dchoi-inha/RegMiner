@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Set;
 
 import regminer.algorithm.Miner;
@@ -27,14 +28,13 @@ public class Main {
 
 	
 	public static void main(String[] args) {
-		ArrayList<Place> P;
-		ArrayList<Trajectory> T;
-		Set<String> C;
+		ArrayList<Place> P=null;
+		ArrayList<Trajectory> T=null;
+		Set<String> C=null;
 		double ep, sg;
 		
 		Debug._PrintL("sg: " + Env.sg +"  ep:" + Env.ep + "  BlockSize: " + Env.B);
 
-		
 		P = loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/places.txt");
 		T = loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/check-ins-sample.txt");
 		C = loadCategories();
@@ -44,16 +44,17 @@ public class Main {
 		long cpuTimeElapsed;
 		double [] t = new double[2];
 		
-//		Miner skeleton = new SkeletonRegMiner(P, T, C, ep, sg);
-//		cpuTimeElapsed = Util.getCpuTime();
-//		ArrayList<PRegion> results1 = skeleton.mine();
-//		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[0] = cpuTimeElapsed/(double)1000000000;
+		Miner skeleton = new SkeletonRegMiner(P, T, C, ep, sg);
+		cpuTimeElapsed = Util.getCpuTime();
+		ArrayList<PRegion> results1 = skeleton.mine();
+		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[0] = cpuTimeElapsed/(double)1000000000;
 		
 		Miner reg = new RegMiner(P, T, C, ep, sg);
 		cpuTimeElapsed = Util.getCpuTime();
 		ArrayList<PRegion> results2 = reg.mine();
 		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[1] = cpuTimeElapsed/(double)1000000000;
 		
+		System.out.println("# pRegions: " + results1.size() + "\t" + results2.size());
 		System.out.println("time:" + t[0] +"\t"+t[1]);
 		
 	}
@@ -67,12 +68,13 @@ public class Main {
 			in = new BufferedReader(new FileReader(new File(fpath)));
 
 
+			long idLong = 0;
 			for (String line = in.readLine(); line != null; line = in.readLine())
 			{
 				String [] tokens = line.split("\t");
 				String id = tokens[0];
 
-				Trajectory traj = new Trajectory(id);
+				Trajectory traj = new Trajectory(++idLong);
 
 				String [] checkins = tokens[1].split("\\|");
 
@@ -108,6 +110,9 @@ public class Main {
 	public static ArrayList<Place> loadPOIs(String fpath)  {
 
 		Debug._PrintL("----Start loading POIs----");
+		Env.Place_Map = new HashMap<String, Place>();
+		Env.Cate_Id = new HashMap<String, Integer>();
+		Env.Cate_Str = new HashMap<Integer, String>();
 
 		ArrayList<Place> POIs = new ArrayList<Place>();
 

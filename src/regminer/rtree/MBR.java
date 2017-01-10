@@ -1,6 +1,8 @@
 package regminer.rtree;
 
+
 import regminer.struct.Point;
+import regminer.util.Env;
 
 /**
  * @author Dong-Wan Choi at Imperial College London
@@ -40,10 +42,10 @@ public class MBR {
 	}
 
 	public void enlarge(double ep) {
-		this.x.l -= ep;
-		this.y.l -= ep;
-		this.x.h += ep;
-		this.y.h += ep;
+		this.x.l = Math.max(0, this.x.l-ep);
+		this.y.l = Math.max(0, this.y.l-ep);
+		this.x.h = Math.min(Env.MaxCoord, this.x.h + ep);
+		this.y.h = Math.min(Env.MaxCoord, this.y.h + ep);
 	}
 	
 	public String toString() {
@@ -51,4 +53,5 @@ public class MBR {
 					+String.format("%1$.3f", y.l)+","+String.format("%1$.3f", y.h)+"]";	
 
 	}
+	
 }

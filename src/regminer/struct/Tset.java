@@ -1,9 +1,11 @@
 package regminer.struct;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 
+import regminer.slist.Item;
 import regminer.slist.SLlist;
 
 /**
@@ -12,16 +14,16 @@ import regminer.slist.SLlist;
  * @date 21 Dec 2016
  *
  */
-public class Tset implements Iterable<Transition>{
-
+public class Tset implements Iterable<Transition> {
 	public Pattern pattern;
 	public ArrayList<Transition> trns;
 	
 	private double weight;
 	
-	
 	public SLlist listX;
 	public SLlist listY;
+	
+	public HashSet<Transition> set;
 	
 	public Tset(Pattern pattern)
 	{
@@ -31,11 +33,15 @@ public class Tset implements Iterable<Transition>{
 		
 		this.listX = new SLlist();
 		this.listY = new SLlist();
+		
+		this.set = new HashSet<Transition>();
 	}
 	
 	public void add(Transition trn) {
 		trns.add(trn);
 		weight += trn.weight();
+		
+		set.add(trn);
 	}
 	
 	
@@ -51,9 +57,13 @@ public class Tset implements Iterable<Transition>{
 		return places;
 	}
 	
-	public void mergeWith(Tset tSet) {
-		trns.addAll(tSet.trns);
-		weight += tSet.weight();
+//	public void mergeWith(Tset tSet) {
+//		trns.addAll(tSet.trns);
+//		weight += tSet.weight();
+//	}
+	
+	public boolean contains(Transition trn) {
+		return set.contains(trn);
 	}
 	
 	public int size(){
@@ -73,4 +83,13 @@ public class Tset implements Iterable<Transition>{
 		return trns.iterator();
 	}
 
+	public void clear() {
+		this.trns.clear();
+		this.weight = 0;
+		this.set.clear();
+		
+	}
+	
+	
+	
 }

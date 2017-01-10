@@ -25,10 +25,10 @@ public class NeighborTset extends Tset {
 		density += ratio*trn.weight();
 	}
 	
-	public void mergeWith(NeighborTset nTset) {
-		super.mergeWith(nTset);
-//		ratios.addAll(nTset.ratios);
-	}
+//	public void mergeWith(NeighborTset nTset) {
+//		super.mergeWith(nTset);
+////		ratios.addAll(nTset.ratios);
+//	}
 	
 	public double density() {
 		return density;

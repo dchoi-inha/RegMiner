@@ -15,8 +15,6 @@ import regminer.util.Util;
  *
  */
 public class Transition implements Iterable<Visit>, Comparable<Transition>{
-	
-
 	public Trajectory traj;
 	public List<Visit> visits;
 	public Pattern pattern;
@@ -26,7 +24,7 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 	private NeighborTset neighbors;
 	
 	private MBR mbr;
-	private MBR embr;
+	public MBR embr;
 
 	public Transition(Trajectory traj, Pattern pattern, int s, int e)
 	{
@@ -41,7 +39,10 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 		this.mbr = null;
 		
 		this.embr = traj.visits.get(s).embr;
+		if (this.embr != null)
+			this.embr.enlarge(Env.ep);
 	}
+	
 	
 	public HashSet<Place> computePOIs() {
 		HashSet<Place> places = new HashSet<Place>();
@@ -73,6 +74,10 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 		this.s = s;
 		this.e = e;
 		this.visits = traj.visits.subList(s, e+1);
+		
+		this.embr = traj.visits.get(s).embr;
+		if (this.embr != null)
+			this.embr.enlarge(Env.ep);
 	}
 	
 	public int length() {
@@ -184,10 +189,16 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 
 	@Override
 	public int compareTo(Transition o) {
-		if (!this.traj.equals(o.traj)) 
-			return 1;
-		else 
-			return (this.s - o.s);
+		
+		if (this.traj.equals(o.traj))
+			return this.s - o.s;
+		else {
+			long idDiff = this.traj.uid - o.traj.uid;
+			if (idDiff > 0) return 1;
+			else if (idDiff < 0) return -1;
+			else return 0;
+		}
+		
 	}
 	
 	public double computeRatio(Transition other, double ep) {
@@ -218,4 +229,6 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 	}
 
 
+	
+	
 }

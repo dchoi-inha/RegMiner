@@ -1,5 +1,10 @@
 package regminer.util;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
@@ -120,5 +125,22 @@ public class Util {
 		return bean.isCurrentThreadCpuTimeSupported()?
 				bean.getCurrentThreadCpuTime(): 0L;
 	}
+	
+	
+	 public static <T extends Object> T getCopy(T obj) throws IOException, ClassNotFoundException{
+		  
+		  ByteArrayOutputStream byteOutStream = new ByteArrayOutputStream();
+		  ObjectOutputStream objectOutStream = new ObjectOutputStream (byteOutStream);
+		  objectOutStream.writeObject(obj);
+		  objectOutStream.flush();
+		  objectOutStream.close();
+		  byteOutStream.close();
+		  byte[] byteData = byteOutStream.toByteArray();
+
+		  ByteArrayInputStream bais = new ByteArrayInputStream(byteData);
+		  T copy = (T) new ObjectInputStream(bais).readObject();
+		  
+		  return copy;
+		 }
 
 }

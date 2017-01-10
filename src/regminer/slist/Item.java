@@ -1,20 +1,7 @@
 package regminer.slist;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
 
-import com.google.common.collect.LinkedHashMultiset;
-
-import regminer.Main;
-import regminer.rtree.MBR;
-import regminer.struct.Place;
-import regminer.struct.Trajectory;
 import regminer.struct.Transition;
-import regminer.util.Debug;
-import regminer.util.Env;
 
 /**
  * @author Dong-Wan Choi at Imperial College London
@@ -22,8 +9,8 @@ import regminer.util.Env;
  * @date 9 Jan 2017
  *
  */
-public class Item implements Comparable<Item>{
-	
+public class Item implements Comparable<Item> {
+
 	public double coord;
 	public Transition trn;
 	public int sgn; // 1 or -1
@@ -31,8 +18,13 @@ public class Item implements Comparable<Item>{
 	public Item next;
 	public Item prev;
 	
+	public Item cloneData() {
+		Item item = new Item(this.coord, this.trn, this.sgn);
+		return item;
+	}
+	
 	@Override
-	public int hashCode() {
+ 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
 		long temp;
@@ -76,7 +68,7 @@ public class Item implements Comparable<Item>{
 	}
 	
 	public String toString() {
-		return "(" + trn.toString() + "," + coord + "," + sgn + ")";
+		return "(" + trn.toString() + "," + String.format("%1$.3f", coord) + "," + sgn + ")";
 	}
 	
 
