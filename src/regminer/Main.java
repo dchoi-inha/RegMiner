@@ -47,15 +47,15 @@ public class Main {
 		ArrayList<PRegion> results1 = new ArrayList<PRegion>();
 		ArrayList<PRegion> results2 = new ArrayList<PRegion>();
 		
-		Miner skeleton = new SkeletonRegMiner(P, T, C, ep, sg);
-		cpuTimeElapsed = Util.getCpuTime();
-		results1 = skeleton.mine();
-		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[0] = cpuTimeElapsed/(double)1000000000;
-		
-//		Miner reg = new RegMiner(P, T, C, ep, sg);
+//		Miner skeleton = new SkeletonRegMiner(P, T, C, ep, sg);
 //		cpuTimeElapsed = Util.getCpuTime();
-//		results2 = reg.mine();
-//		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[1] = cpuTimeElapsed/(double)1000000000;
+//		results1 = skeleton.mine();
+//		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[0] = cpuTimeElapsed/(double)1000000000;
+		
+		Miner reg = new RegMiner(P, T, C, ep, sg);
+		cpuTimeElapsed = Util.getCpuTime();
+		results2 = reg.mine();
+		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[1] = cpuTimeElapsed/(double)1000000000;
 		
 		System.out.println("# pRegions: " + results1.size() + "\t" + results2.size());
 		System.out.println("time:" + t[0] +"\t"+t[1]);

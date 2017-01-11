@@ -1,6 +1,5 @@
 package regminer.algorithm;
 
-import java.io.IOException;
 import java.util.*;
 
 import regminer.rtree.MBR;
@@ -8,7 +7,6 @@ import regminer.rtree.RTree;
 import regminer.slist.Item;
 import regminer.struct.*;
 import regminer.util.Debug;
-import regminer.util.Util;
 
 /**
  * @author Dong-Wan Choi at Imperial College London
@@ -51,9 +49,9 @@ public class RegMiner extends Miner {
 					}
 					idx = traj.pattern.indexOf(cate, idx+1);
 				}
-				Collections.sort(listItemsX);
-				Collections.sort(listItemsY);
 			}
+			Collections.sort(listItemsX);
+			Collections.sort(listItemsY);
 			
 			// construct SL-list for the transition set
 			for (Item itemX: listItemsX) {
@@ -64,9 +62,12 @@ public class RegMiner extends Miner {
 				tSet.listY.add(itemY);
 			} listItemsY.clear();
 			
-			HashSet<Tset> partitions = partition(tSet);
+//			Collections.sort(tSet.trns);
+//			procPartition(tSet, freqCateSet, output);
 			
+			HashSet<Tset> partitions = partition(tSet);
 			for (Tset subset: partitions) {
+				Collections.sort(subset.trns); // sort
 				procPartition(subset, freqCateSet, output); // length-1 patterns
 			}
 			
@@ -93,12 +94,16 @@ public class RegMiner extends Miner {
 			if (itemX.sgn == -1) tmpSet.add(itemX.trn);
 			
 			if (itemX.next == null) {
-				for (Item itemY: tSet.listY) {
-					if (tmpSet.contains(itemY.trn)) {
-						tmpSet.listY.add(itemY.cloneData());
+				if (tmpSet.size() == tSet.size()) {// no partitioning
+					partitionsX.add(tSet);
+				} else {
+					for (Item itemY: tSet.listY) {
+						if (tmpSet.contains(itemY.trn)) {
+							tmpSet.listY.add(itemY.cloneData());
+						}
 					}
+					partitionsX.add(tmpSet);
 				}
-				partitionsX.add(tmpSet);
 				break;
 			}
 			
@@ -133,13 +138,17 @@ public class RegMiner extends Miner {
 				if (itemY.sgn == -1 ) tmpSet.add(itemY.trn);
 				
 				if (itemY.next == null) {
-					// update SL-list for the x-axis
-					for (Item itemX: subset.listX) {
-						if (tmpSet.contains(itemX.trn)) {
-							tmpSet.listX.add(itemX.cloneData());
+					if (tmpSet.size() == tSet.size()) {
+						partitions.add(tSet);
+					} else {
+						// update SL-list for the x-axis
+						for (Item itemX: subset.listX) {
+							if (tmpSet.contains(itemX.trn)) {
+								tmpSet.listX.add(itemX.cloneData());
+							}
 						}
+						partitions.add(tmpSet);
 					}
-					partitions.add(tmpSet);
 					break;
 				}
 
@@ -168,8 +177,6 @@ public class RegMiner extends Miner {
 		if (tSet.weight() < this.sg) return;
 //		Debug._PrintL("\n" + tSet.pattern + "("+tSet.size()+")" + "(" + tSet.weight() + ")");
 
-		Collections.sort(tSet.trns); // sort
-		
 		// construct the R-tree on POIs in tSet
 		RTree rt = indexing(tSet);
 
@@ -209,8 +216,13 @@ public class RegMiner extends Miner {
 			if (tSetP.weight() >= this.sg) {
 				HashSet<Tset> partitions = partition(tSetP);
 
-				for (Tset subset: partitions) {
-					procPartition(subset, freqCateSet, output);
+				if (partitions.size() == 1) {
+					procPartition(tSetP, freqCateSet, output);
+				} else {
+					for (Tset subset: partitions) {
+						Collections.sort(subset.trns); // sort
+						procPartition(subset, freqCateSet, output);
+					}
 				}
 			}
 		}

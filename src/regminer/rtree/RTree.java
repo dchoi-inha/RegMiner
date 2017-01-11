@@ -3,6 +3,7 @@ package regminer.rtree;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.PriorityQueue;
 
 import regminer.util.Debug;
@@ -20,6 +21,14 @@ public class RTree {
 	public int leafCount = 0;
 	public int height = 0;
 	public int nodes = 0;
+	
+//	public HashSet<Place> places = new HashSet<Place>();
+//	
+//	public void clearTrnPostings() {
+//		for (Place p: places) {
+//			p.clearPostings();
+//		}
+//	}
 	
 	public RTree() {
 		if (R==null){
@@ -67,8 +76,12 @@ public class RTree {
 					Place p = ((LEntry)e).obj;
 					if (trn.distance(p) <= ep) 
 					{
-						if (p.postingTrns() == null)
-							Debug._Error(this, "postingTrns is NULL");
+						if (p.postingTrns() == null) {
+//							Debug._Error(this, "postingTrns is NULL");
+						}
+						else if (p.postingTrns().isEmpty()) {
+//							Debug._PrintL("postingTrns of " + p + " is empty");
+						}
 						else {
 							for (Transition neighbor: p.postingTrns())
 							{
@@ -330,6 +343,7 @@ public class RTree {
 		adjustTree(l, ll);
 	}
 	public void insert(Place o){
+//		this.places.add(o);
 		Point p = o.loc;
 		LEntry e = new LEntry(p.x, p.x, p.y, p.y, o);
 		insert(e);
