@@ -112,6 +112,7 @@ public class RegMiner extends Miner {
 					}
 					
 					partitionsX.add(tmpSet);
+					Debug._PrintL("Partitioning!! at " + tmpSet.pattern + "(size="+tmpSet.size()+")(weight="+tmpSet.weight()+")");
 					
 					tmpSet = new Tset(tSet.pattern);
 				}
@@ -151,7 +152,8 @@ public class RegMiner extends Miner {
 							}
 						}
 						partitions.add(tmpSet);
-
+						Debug._PrintL("Partitioning!! at " + tmpSet.pattern + "(size="+tmpSet.size()+")(weight="+tmpSet.weight()+")");
+						
 						tmpSet = new Tset(subset.pattern);
 					}
 				}
@@ -163,8 +165,8 @@ public class RegMiner extends Miner {
 	}
 	
 	private void procPartition(Tset tSet, HashSet<String> freqCateSet, ArrayList<PRegion> output) {
-		Debug._PrintL("\n" + tSet.pattern + "("+tSet.size()+")" + "(" + tSet.weight() + ")");
 		if (tSet.weight() < this.sg) return;
+//		Debug._PrintL("\n" + tSet.pattern + "("+tSet.size()+")" + "(" + tSet.weight() + ")");
 
 		Collections.sort(tSet.trns); // sort
 		
@@ -173,8 +175,8 @@ public class RegMiner extends Miner {
 
 		ArrayList<Tset> clusters = pDBSCAN(tSet, rt);
 
-		if (clusters.size() > 1) {
-			Debug._PrintL("\n" + tSet.pattern + "("+tSet.size()+")" + "(" + tSet.weight() + ")");
+		if (clusters.size() > 0) {
+			Debug._PrintL("\n" + tSet.pattern + "("+tSet.size()+")");// + "(" + tSet.weight() + ")");
 			Debug._PrintL("Cluster size:" + clusters.size());
 			for (Tset cluster: clusters) {
 				output.add(new PRegion(cluster));
@@ -203,10 +205,13 @@ public class RegMiner extends Miner {
 	private void growClustering(Tset tSet, HashSet<String> freqCateSet, ArrayList<PRegion> output) {
 		for (String cate: freqCateSet) {
 			Tset tSetP = transitionGrow(tSet, tSet.pattern, cate);
-			HashSet<Tset> partitions = partition(tSetP);
 			
-			for (Tset subset: partitions) {
-				procPartition(subset, freqCateSet, output);
+			if (tSetP.weight() >= this.sg) {
+				HashSet<Tset> partitions = partition(tSetP);
+
+				for (Tset subset: partitions) {
+					procPartition(subset, freqCateSet, output);
+				}
 			}
 		}
 	}
@@ -225,8 +230,11 @@ public class RegMiner extends Miner {
 				eNew = trn.nextPos(cate);
 				if (eNew > trn.e) { // if such a eNew exists
 					
-					if (trnPrev.s <= trn.s && trnPrev.e >= eNew) // if previous transition contains new transition
+					if (trnPrev.s <= trn.s && trnPrev.e >= eNew) {// if previous transition contains new transition
+						tSetP.decWeight(trnPrev.weight());
 						trnPrev.setInterval(trn.s, eNew);
+						tSetP.incWeight(trnPrev.weight());
+					}
 					else {
 						Transition trnNew = new Transition(trn.traj, seqP, trn.s, eNew);
 						tSetP.add(trnNew);	trnMap.put(trn, trnNew);

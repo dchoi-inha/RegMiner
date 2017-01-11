@@ -79,11 +79,11 @@ public class Item implements Comparable<Item> {
 			if (this.trn.equals(other.trn)) {
 				return (-1)*sgn; // (+) first, (-) last
 			}
-			else if (this.sgn * other.sgn < 0){ // sgn's are differ
+			else if (this.sgn * other.sgn < 0){ // sgn's are different
 				return (-1)*sgn; // (+) first, (-) last
 			}
-			else {
-				return this.sgn+other.sgn;
+			else { // sgn's are the same
+				return this.trn.compareTo(other.trn);
 			}
 		}
 		else {

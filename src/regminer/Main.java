@@ -28,6 +28,7 @@ public class Main {
 
 	
 	public static void main(String[] args) {
+		Debug._PrintL("max memory size: " + java.lang.Runtime.getRuntime().maxMemory()/(double)1024/(double)1024/(double)1024 + "GBs");
 		ArrayList<Place> P=null;
 		ArrayList<Trajectory> T=null;
 		Set<String> C=null;
@@ -36,23 +37,25 @@ public class Main {
 		Debug._PrintL("sg: " + Env.sg +"  ep:" + Env.ep + "  BlockSize: " + Env.B);
 
 		P = loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/places.txt");
-		T = loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/check-ins-sample.txt");
+		T = loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/check-ins.txt");
 		C = loadCategories();
 		ep = Env.ep;
 		sg = Env.sg;
 		
 		long cpuTimeElapsed;
 		double [] t = new double[2];
+		ArrayList<PRegion> results1 = new ArrayList<PRegion>();
+		ArrayList<PRegion> results2 = new ArrayList<PRegion>();
 		
 		Miner skeleton = new SkeletonRegMiner(P, T, C, ep, sg);
 		cpuTimeElapsed = Util.getCpuTime();
-		ArrayList<PRegion> results1 = skeleton.mine();
+		results1 = skeleton.mine();
 		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[0] = cpuTimeElapsed/(double)1000000000;
 		
-		Miner reg = new RegMiner(P, T, C, ep, sg);
-		cpuTimeElapsed = Util.getCpuTime();
-		ArrayList<PRegion> results2 = reg.mine();
-		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[1] = cpuTimeElapsed/(double)1000000000;
+//		Miner reg = new RegMiner(P, T, C, ep, sg);
+//		cpuTimeElapsed = Util.getCpuTime();
+//		results2 = reg.mine();
+//		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[1] = cpuTimeElapsed/(double)1000000000;
 		
 		System.out.println("# pRegions: " + results1.size() + "\t" + results2.size());
 		System.out.println("time:" + t[0] +"\t"+t[1]);

@@ -48,7 +48,7 @@ public class SkeletonRegMiner extends Miner {
 			ArrayList<Tset> clusters = pDBSCAN(trnSet, rt);
 			
 			if (clusters.size() > 0) {
-				Debug._PrintL("\n" + seq + "("+trnSet.size()+")" + "(" + trnSet.weight() + ")");
+				Debug._PrintL("\n" + seq + "("+trnSet.size()+")");// + "(" + trnSet.weight() + ")");
 				Debug._PrintL("Cluster size:" + clusters.size());
 				for (Tset cluster: clusters) {
 					results.add(new PRegion(cluster));
@@ -138,9 +138,11 @@ public class SkeletonRegMiner extends Miner {
 				eNew = trn.nextPos(cate);
 				if (eNew > trn.e) { // if such a eNew exists
 					
-					if (trnPrev.s <= trn.s && trnPrev
-							.e >= eNew) // if previous transition contains new transition
+					if (trnPrev.s <= trn.s && trnPrev.e >= eNew) { // if previous transition contains new transition
+						tSetP.decWeight(trnPrev.weight());
 						trnPrev.setInterval(trn.s, eNew);
+						tSetP.incWeight(trnPrev.weight());
+					}
 					else {
 						Transition trnNew = new Transition(trn.traj, seqP, trn.s, eNew);
 						tSetP.add(trnNew);

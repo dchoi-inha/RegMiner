@@ -89,6 +89,14 @@ public class Tset implements Iterable<Transition> {
 		this.set.clear();
 		
 	}
+
+	public void decWeight(double decWeight) {
+		this.weight -= decWeight;		
+	}
+
+	public void incWeight(double incWeight) {
+		this.weight += incWeight;		
+	}
 	
 	
 	
