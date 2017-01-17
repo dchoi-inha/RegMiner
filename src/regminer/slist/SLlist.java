@@ -11,8 +11,8 @@ import java.util.Iterator;
  *
  */
 public class SLlist implements Iterable<Item> {
-	protected Item head;
-	protected Item tail;
+	public Item head;
+	public Item tail;
 		
 	
 //	public void add(Transition trn) {
@@ -75,6 +75,8 @@ public class SLlist implements Iterable<Item> {
 			str += item.toString();
 			if (item.next != null) str += "-->";
 		}
+		
+//		str += head.toString() + "-...->" + tail.toString();
 		
 		return str;
 	}

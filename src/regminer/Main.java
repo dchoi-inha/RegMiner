@@ -37,7 +37,7 @@ public class Main {
 		Debug._PrintL("sg: " + Env.sg +"  ep:" + Env.ep + "  BlockSize: " + Env.B);
 
 		P = loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/places.txt");
-		T = loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/check-ins.txt");
+		T = loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/check-ins-sample.txt");
 		C = loadCategories();
 		ep = Env.ep;
 		sg = Env.sg;
@@ -47,10 +47,10 @@ public class Main {
 		ArrayList<PRegion> results1 = new ArrayList<PRegion>();
 		ArrayList<PRegion> results2 = new ArrayList<PRegion>();
 		
-//		Miner skeleton = new SkeletonRegMiner(P, T, C, ep, sg);
-//		cpuTimeElapsed = Util.getCpuTime();
-//		results1 = skeleton.mine();
-//		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[0] = cpuTimeElapsed/(double)1000000000;
+		Miner skeleton = new SkeletonRegMiner(P, T, C, ep, sg);
+		cpuTimeElapsed = Util.getCpuTime();
+		results1 = skeleton.mine();
+		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[0] = cpuTimeElapsed/(double)1000000000;
 		
 		Miner reg = new RegMiner(P, T, C, ep, sg);
 		cpuTimeElapsed = Util.getCpuTime();

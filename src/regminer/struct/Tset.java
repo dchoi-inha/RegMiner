@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 
+import regminer.rtree.MBR;
 import regminer.slist.Item;
 import regminer.slist.SLlist;
 
@@ -24,6 +25,7 @@ public class Tset implements Iterable<Transition> {
 	public SLlist listY;
 	
 	public HashSet<Transition> set;
+	
 	
 	public Tset(Pattern pattern)
 	{
@@ -76,6 +78,12 @@ public class Tset implements Iterable<Transition> {
 
 	public String toString() {
 		return pattern.toString() + " : " + trns.toString();
+	}
+	public String embrStr() {
+		return "("+String.format("%1$.3f", this.listX.head.coord)+","+
+	String.format("%1$.3f", this.listX.tail.coord)+")" +" "+
+				"("+String.format("%1$.3f", this.listY.head.coord)+","+
+	String.format("%1$.3f", this.listY.tail.coord)+")";
 	}
 
 	@Override

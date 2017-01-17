@@ -40,6 +40,13 @@ public class MBR {
 		this.x.h = Math.max(this.x.h, p.x);
 		this.y.h = Math.max(this.y.h, p.y);
 	}
+	
+	public void updateMBR(MBR mbr) {
+		this.x.l = Math.min(this.x.l, mbr.x.l);
+		this.y.l = Math.min(this.y.l, mbr.y.l);
+		this.x.h = Math.max(this.x.h, mbr.x.h);
+		this.y.h = Math.max(this.y.h, mbr.y.h);
+	}
 
 	public void enlarge(double ep) {
 		this.x.l = Math.max(0, this.x.l-ep);

@@ -41,8 +41,8 @@ public class RegMiner extends Miner {
 					Transition trn = new Transition(traj, seq, idx, idx);
 					tSet.add(trn);
 					Item [] itemsX = new Item[2]; Item [] itemsY = new Item[2];
-					itemsX[0] = new Item(trn.eMBR().x.l, trn, 1); itemsX[1] = new Item(trn.eMBR().x.h, trn, -1);
-					itemsY[0] = new Item(trn.eMBR().y.l, trn, 1); itemsY[1] = new Item(trn.eMBR().y.h, trn, -1);
+					itemsX[0] = new Item(trn.getMBR().x.l, trn, 1); itemsX[1] = new Item(trn.getMBR().x.h, trn, -1);
+					itemsY[0] = new Item(trn.getMBR().y.l, trn, 1); itemsY[1] = new Item(trn.getMBR().y.h, trn, -1);
 					
 					for (int i=0; i < itemsX.length; i++) {
 						listItemsX.add(itemsX[i]); listItemsY.add(itemsY[i]);
@@ -70,7 +70,7 @@ public class RegMiner extends Miner {
 				Collections.sort(subset.trns); // sort
 				procPartition(subset, freqCateSet, output); // length-1 patterns
 			}
-			
+			growClustering(tSet, freqCateSet, output);
 			
 		}
 		
@@ -117,7 +117,7 @@ public class RegMiner extends Miner {
 					}
 					
 					partitionsX.add(tmpSet);
-					Debug._PrintL("Partitioning!! at " + tmpSet.pattern + "(size="+tmpSet.size()+")(weight="+tmpSet.weight()+")");
+//					Debug._PrintL("Partitioning!! at " + tmpSet.pattern + "(size="+tmpSet.size()+")(weight="+tmpSet.weight()+")" + "(" + tSet.embrStr() + ")");
 					
 					tmpSet = new Tset(tSet.pattern);
 				}
@@ -161,7 +161,7 @@ public class RegMiner extends Miner {
 							}
 						}
 						partitions.add(tmpSet);
-						Debug._PrintL("Partitioning!! at " + tmpSet.pattern + "(size="+tmpSet.size()+")(weight="+tmpSet.weight()+")");
+//						Debug._PrintL("Partitioning!! at " + tmpSet.pattern + "(size="+tmpSet.size()+")(weight="+tmpSet.weight()+")" + "(" + tSet.embrStr() + ")");
 						
 						tmpSet = new Tset(subset.pattern);
 					}
@@ -175,7 +175,7 @@ public class RegMiner extends Miner {
 	
 	private void procPartition(Tset tSet, HashSet<String> freqCateSet, ArrayList<PRegion> output) {
 		if (tSet.weight() < this.sg) return;
-//		Debug._PrintL("\n" + tSet.pattern + "("+tSet.size()+")" + "(" + tSet.weight() + ")");
+//		Debug._PrintL("\n" + tSet.pattern + "("+tSet.size()+")" + "(" + tSet.weight() + ")" + "(" + tSet.embrStr() + ")");
 
 		// construct the R-tree on POIs in tSet
 		RTree rt = indexing(tSet);
@@ -183,14 +183,18 @@ public class RegMiner extends Miner {
 		ArrayList<Tset> clusters = pDBSCAN(tSet, rt);
 
 		if (clusters.size() > 0) {
-			Debug._PrintL("\n" + tSet.pattern + "("+tSet.size()+")");// + "(" + tSet.weight() + ")");
+			Debug._PrintL("\n" + tSet.pattern + "("+tSet.size()+")" + "(" + tSet.weight() + ")" + "(" + tSet.embrStr() + ")");
 			Debug._PrintL("Cluster size:" + clusters.size());
 			for (Tset cluster: clusters) {
-				output.add(new PRegion(cluster));
+				PRegion pRegion = new PRegion(cluster);
+//				if (pRegion.S.toString().contains("Train Station"))
+//					Debug._PrintL(pRegion.toString());
+				output.add(pRegion);
 			}
+		} else {
+//			Debug._PrintL("\n" + tSet.pattern + "("+tSet.size()+")" + "(" + tSet.weight() + ")" + "(" + tSet.embrStr() + ")");
+//			Debug._PrintL("No Cluster!!");
 		}
-		
-		growClustering(tSet, freqCateSet, output);		
 	}
 	
 	private RTree indexing(Tset tSet) {
@@ -224,6 +228,8 @@ public class RegMiner extends Miner {
 						procPartition(subset, freqCateSet, output);
 					}
 				}
+				
+				growClustering(tSetP, freqCateSet, output);
 			}
 		}
 	}
@@ -234,6 +240,7 @@ public class RegMiner extends Miner {
 		Tset tSetP = new Tset(seqP);
 		
 		HashMap<Transition, Transition> trnMap = new HashMap<Transition, Transition>();
+		
 
 		Transition trnPrev = null;
 		int eNew = 0;
@@ -265,17 +272,41 @@ public class RegMiner extends Miner {
 		}
 		
 		
-		for (Item itemX: tSet.listX ) {
-			if (trnMap.containsKey(itemX.trn)) {
-				tSetP.listX.add(new Item(itemX.coord, trnMap.get(itemX.trn), itemX.sgn));
-			}
-		}
+//		for (Item itemX: tSet.listX ) {
+//			if (trnMap.containsKey(itemX.trn)) {
+////				tSetP.listX.add(new Item(itemX.coord, trnMap.get(itemX.trn), itemX.sgn));
+//			}
+//		}
+//		
+//		for (Item itemY: tSet.listY ) {
+//			if (trnMap.containsKey(itemY.trn)) {
+////				tSetP.listY.add(new Item(itemY.coord, trnMap.get(itemY.trn), itemY.sgn));
+//			}
+//		}
 		
-		for (Item itemY: tSet.listY ) {
-			if (trnMap.containsKey(itemY.trn)) {
-				tSetP.listY.add(new Item(itemY.coord, trnMap.get(itemY.trn), itemY.sgn));
+		ArrayList<Item> listItemsX = new ArrayList<Item>();
+		ArrayList<Item> listItemsY = new ArrayList<Item>();
+		for (Transition trn: trnMap.values()) {
+		
+			Item [] itemsX = new Item[2]; Item [] itemsY = new Item[2];
+			itemsX[0] = new Item(trn.getMBR().x.l, trn, 1); itemsX[1] = new Item(trn.getMBR().x.h, trn, -1);
+			itemsY[0] = new Item(trn.getMBR().y.l, trn, 1); itemsY[1] = new Item(trn.getMBR().y.h, trn, -1);
+			
+			for (int i=0; i < itemsX.length; i++) {
+				listItemsX.add(itemsX[i]); listItemsY.add(itemsY[i]);
 			}
 		}
+		Collections.sort(listItemsX);
+		Collections.sort(listItemsY);
+		
+		// construct SL-list for the transition set
+		for (Item itemX: listItemsX) {
+			tSetP.listX.add(itemX);
+		} listItemsX.clear();
+		
+		for (Item itemY: listItemsY) {
+			tSetP.listY.add(itemY);
+		} listItemsY.clear();
 		
 
 		return tSetP;

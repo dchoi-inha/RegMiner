@@ -21,7 +21,18 @@ public class PRegion {
 	}
 	
 	public String toString() {
-		return S.toString() + "(" +trns.size()+" core transitions, " + P.size() + " POIs)";
+		return "Region" + S.toString() + "\n" + trnsStr();
+//		return S.toString() + "(" +trns.size()+" core transitions, " + P.size() + " POIs)";
+	}
+	
+	public String trnsStr() {
+		String str = "";
+		
+		for (Transition trn: trns) {
+			str += trn.toString() + "(density=" + trn.density() + ")";
+		}
+		
+		return str;
 	}
 		
 }

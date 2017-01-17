@@ -48,10 +48,13 @@ public class SkeletonRegMiner extends Miner {
 			ArrayList<Tset> clusters = pDBSCAN(trnSet, rt);
 			
 			if (clusters.size() > 0) {
-				Debug._PrintL("\n" + seq + "("+trnSet.size()+")");// + "(" + trnSet.weight() + ")");
+				Debug._PrintL("\n" + seq + "("+trnSet.size()+")" + "(" + trnSet.weight() + ")");
 				Debug._PrintL("Cluster size:" + clusters.size());
 				for (Tset cluster: clusters) {
-					results.add(new PRegion(cluster));
+					PRegion pRegion = new PRegion(cluster);
+//					if (pRegion.S.toString().contains("Train Station"))
+//						Debug._PrintL(pRegion.toString());
+					results.add(pRegion);
 				}
 			}
 		}

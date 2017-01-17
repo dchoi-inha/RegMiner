@@ -24,7 +24,7 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 	private NeighborTset neighbors;
 	
 	private MBR mbr;
-	public MBR embr;
+	private MBR embr;
 
 	public Transition(Trajectory traj, Pattern pattern, int s, int e)
 	{
@@ -78,6 +78,8 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 		this.embr = traj.visits.get(s).embr;
 		if (this.embr != null)
 			this.embr.enlarge(Env.ep);
+		
+		this.mbr = null; // to update the MBR
 	}
 	
 	public int length() {
@@ -224,9 +226,9 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 		return this.mbr;
 	}
 	
-	public MBR eMBR() {
-		return this.embr;
-	}
+//	public MBR eMBR() {
+//		return this.embr;
+//	}
 
 
 	
