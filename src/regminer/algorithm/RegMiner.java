@@ -31,6 +31,7 @@ public class RegMiner extends Miner {
 		// 2. For each frequent category, construct and partition its transition set
 		for (String cate: freqCateSet)
 		{
+			if(cate.equals("Park")) continue;//TODO: for debugging
 			Pattern seq = new Pattern(cate);
 			Tset tSet = new Tset(seq);
 			ArrayList<Item> listItemsX = new ArrayList<Item>();
@@ -70,6 +71,8 @@ public class RegMiner extends Miner {
 				Collections.sort(subset.trns); // sort
 				procPartition(subset, freqCateSet, output); // length-1 patterns
 			}
+			
+//			if (output.isEmpty())
 			growClustering(tSet, freqCateSet, output);
 			
 		}
@@ -187,9 +190,9 @@ public class RegMiner extends Miner {
 			Debug._PrintL("Cluster size:" + clusters.size());
 			for (Tset cluster: clusters) {
 				PRegion pRegion = new PRegion(cluster);
-//				if (pRegion.S.toString().contains("Train Station"))
-//					Debug._PrintL(pRegion.toString());
-				output.add(pRegion);
+				
+				if (tSet.pattern.length()>1) // TODO: debugging or not?
+					output.add(pRegion);
 			}
 		} else {
 //			Debug._PrintL("\n" + tSet.pattern + "("+tSet.size()+")" + "(" + tSet.weight() + ")" + "(" + tSet.embrStr() + ")");
@@ -214,7 +217,13 @@ public class RegMiner extends Miner {
 	}
 	
 	private void growClustering(Tset tSet, HashSet<String> freqCateSet, ArrayList<PRegion> output) {
+		if (tSet.pattern.length() > 3 || output.size() > 10) return; 		// TODO: for debugging
+		
+		
 		for (String cate: freqCateSet) {
+//			if(cate.equals("Park")) return;//TODO: for debugging
+			
+			if (cate.equals(tSet.pattern.seq.get(tSet.pattern.seq.size()-1))) continue;
 			Tset tSetP = transitionGrow(tSet, tSet.pattern, cate);
 			
 			if (tSetP.weight() >= this.sg) {
@@ -229,6 +238,7 @@ public class RegMiner extends Miner {
 					}
 				}
 				
+//				if (output.isEmpty())
 				growClustering(tSetP, freqCateSet, output);
 			}
 		}
@@ -356,7 +366,7 @@ public class RegMiner extends Miner {
 
 			processed.add(trn);
 			NeighborTset neighborTrns = getNeighbors(trn, rt);
-			trn.setDensity(neighborTrns.density());
+			trn.setDensity(neighborTrns.sumRatios());
 			trn.setNeighbors(neighborTrns);
 
 			
@@ -372,7 +382,7 @@ public class RegMiner extends Miner {
 					if (!processed.contains(neighbor)) {
 						processed.add(neighbor);
 						NeighborTset newNeighborTrns = getNeighbors(neighbor, rt);
-						neighbor.setDensity(newNeighborTrns.density());
+						neighbor.setDensity(newNeighborTrns.sumRatios());
 						neighbor.setNeighbors(newNeighborTrns);
 						if (neighbor.density() >= this.sg) {
 							cluster.add(neighbor);

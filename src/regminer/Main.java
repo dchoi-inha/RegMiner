@@ -36,8 +36,8 @@ public class Main {
 		
 		Debug._PrintL("sg: " + Env.sg +"  ep:" + Env.ep + "  BlockSize: " + Env.B);
 
-		P = loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/places.txt");
-		T = loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/check-ins-sample.txt");
+		P = loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/tsmc2014/places.txt");
+		T = loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/tsmc2014/check-ins.txt");
 		C = loadCategories();
 		ep = Env.ep;
 		sg = Env.sg;
@@ -47,10 +47,10 @@ public class Main {
 		ArrayList<PRegion> results1 = new ArrayList<PRegion>();
 		ArrayList<PRegion> results2 = new ArrayList<PRegion>();
 		
-		Miner skeleton = new SkeletonRegMiner(P, T, C, ep, sg);
-		cpuTimeElapsed = Util.getCpuTime();
-		results1 = skeleton.mine();
-		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[0] = cpuTimeElapsed/(double)1000000000;
+//		Miner skeleton = new SkeletonRegMiner(P, T, C, ep, sg);
+//		cpuTimeElapsed = Util.getCpuTime();
+//		results1 = skeleton.mine();
+//		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[0] = cpuTimeElapsed/(double)1000000000;
 		
 		Miner reg = new RegMiner(P, T, C, ep, sg);
 		cpuTimeElapsed = Util.getCpuTime();
@@ -91,8 +91,11 @@ public class Main {
 						visit = new Visit(checkin[0].trim(), checkin[1]);
 					else
 						visit = new Visit(checkin[0].trim());
+					
+					if (visit.place != null && prev != null && (prev.place.category.equals(visit.place.category) && prev.place.loc.distance(visit.place.loc) <= Env.lambda))
+						continue;
 
-					if (visit.place != null && (prev == null || !prev.place.equals(visit.place))) {
+					if (visit.place != null && (prev == null || !prev.place.equals(visit.place) )) {
 						traj.add(visit);
 						prev = visit;
 					}

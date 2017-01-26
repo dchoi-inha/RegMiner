@@ -97,6 +97,7 @@ public class SkeletonRegMiner extends Miner {
 	
 		for (String cate: freqCateSet)
 		{
+			if (cate.equals(tSet.pattern.seq.get(tSet.pattern.seq.size()-1))) continue;
 			Tset tSetP = transitionGrow(tSet, seq, cate);
 
 			if (tSetP.weight() >= this.sg) {
@@ -177,7 +178,7 @@ public class SkeletonRegMiner extends Miner {
 			processed.add(trn);
 //			NeighborTset neighborTrns = getNeighbors(trn, trnSet);
 			NeighborTset neighborTrns = getNeighbors(trn, rt);
-			trn.setDensity(neighborTrns.density());
+			trn.setDensity(neighborTrns.sumRatios());
 			trn.setNeighbors(neighborTrns);
 
 			
@@ -194,7 +195,7 @@ public class SkeletonRegMiner extends Miner {
 						processed.add(neighbor);
 //						NeighborTset newNeighborTrns = getNeighbors(neighbor, trnSet);
 						NeighborTset newNeighborTrns = getNeighbors(neighbor, rt);
-						neighbor.setDensity(newNeighborTrns.density());
+						neighbor.setDensity(newNeighborTrns.sumRatios());
 						neighbor.setNeighbors(newNeighborTrns);
 						if (neighbor.density() >= this.sg) {
 							cluster.add(neighbor);

@@ -23,7 +23,9 @@ public class Env {
 	public final static double MaxCoord = 1.0;
 	
 	public static double ScaleRatio = 1.0;
+
+	public static double lambda = 0.0001;
 	
-	public final static double ep = 0.01;
-	public final static double sg = 100;
+	public final static double ep = 0.005;
+	public final static double sg = 50;
 }

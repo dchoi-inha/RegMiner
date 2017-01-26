@@ -19,8 +19,9 @@ public class Visit {
 	
 	public Visit(String timestamp, String pid) throws ParseException
 	{
-		DateFormat format = new SimpleDateFormat("YYYY-MM-DD HH:mm:ss", Locale.ENGLISH);
-		this.time = format.parse(timestamp);
+//		DateFormat format = new SimpleDateFormat("YYYY-MM-DD HH:mm:ss", Locale.ENGLISH);
+//		DateFormat format = new SimpleDateFormat("DD-MMM-YYYY HH:mm:ss", Locale.ENGLISH); // 07-Apr-2012 23:33:08
+//		this.time = format.parse(timestamp);
 		this.place = Env.Place_Map.get(pid);
 	}
 	

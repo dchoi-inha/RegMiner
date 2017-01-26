@@ -25,6 +25,8 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 	
 	private MBR mbr;
 	private MBR embr;
+	
+//	private double distSum;
 
 	public Transition(Trajectory traj, Pattern pattern, int s, int e)
 	{
@@ -41,6 +43,14 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 		this.embr = traj.visits.get(s).embr;
 		if (this.embr != null)
 			this.embr.enlarge(Env.ep);
+		
+		
+//		this.distSum = 0;
+//		for (int i=0; i < this.length()-1; i++) {
+//			Place p1 = visits.get(i).place;
+//			Place p2 = visits.get(i+1).place;
+//			this.distSum += p1.loc.distance(p2.loc); 
+//		}
 	}
 	
 	
@@ -80,6 +90,13 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 			this.embr.enlarge(Env.ep);
 		
 		this.mbr = null; // to update the MBR
+		
+//		this.distSum = 0;
+//		for (int i=0; i < this.length()-1; i++) {
+//			Place p1 = visits.get(i).place;
+//			Place p2 = visits.get(i+1).place;
+//			this.distSum += p1.loc.distance(p2.loc); 
+//		}
 	}
 	
 	public int length() {
@@ -115,11 +132,20 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 	}
 	
 	public void setDensity(double density) {
-		this.density = density;
+//		double factor = Env.ep/this.distSum;
+//		this.density = density*Math.min(factor, 1);
+		
+		double penalty = (double) this.pattern.length() / (double) this.length();
+		
+		this.density = density*penalty;
 	}
 	
 	public void setNeighbors(NeighborTset neighborTrns) {
 		this.neighbors = neighborTrns;
+	}
+	
+	public NeighborTset neighbors() {
+		return this.neighbors;
 	}
 	
 //	public boolean contains(Transition trn) {
@@ -127,7 +153,7 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 //	}
 	
 	public String toString() {
-		String str = "T"+ traj.uid+"["+s+":"+e+"]";
+		String str = "T"+ traj.uid+"["+s+":"+e+"]"+"(density="+density+")"; 
 //		String str = "T"+ traj.uid+"["+s+":"+e+"]"+pattern.toString()+"(delta="+density+")"; 
 //		str += "\n" + strPOIs();
 		

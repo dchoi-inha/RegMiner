@@ -30,6 +30,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import regminer.Main;
 import regminer.algorithm.Miner;
+import regminer.algorithm.RegMiner;
 import regminer.algorithm.SkeletonRegMiner;
 import regminer.struct.NeighborTset;
 import regminer.struct.PRegion;
@@ -67,10 +68,37 @@ public class MainApp extends Application implements MapComponentInitializedListe
 
 	@Override
 	public void mapInitialized() {
+		
+		ArrayList<Place> P;
+		ArrayList<Trajectory> T;
+		Set<String> C;
+		double ep, sg;
+		Debug._PrintL("sg: " + Env.sg +"  ep:" + Env.ep + "  BlockSize: " + Env.B);
+
+		P = Main.loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/tsmc2014/places.txt");
+		T = Main.loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/tsmc2014/check-ins-sample.txt");
+		C = Main.loadCategories();
+		ep = Env.ep;
+		sg = Env.sg;
+		
+		double avgLat = P.stream().mapToDouble(val -> val.lat).average().getAsDouble();
+		double avgLon = P.stream().mapToDouble(val -> val.lon).average().getAsDouble();
+
+		
+		long cpuTimeElapsed;
+		double [] t = new double[1];
+		
+	
+		Miner regminer = new RegMiner(P, T, C, ep, sg);
+		cpuTimeElapsed = Util.getCpuTime();
+		ArrayList<PRegion> results = regminer.mine();
+		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[0] = cpuTimeElapsed/(double)1000000000;
+		
+		
 		//Set the initial properties of the map.
 		MapOptions mapOptions = new MapOptions();
 
-		mapOptions.center(new LatLong(40.7242017240576, -73.97497613848594))
+		mapOptions.center(new LatLong(avgLat, avgLon))
 		.mapType(MapTypeIdEnum.ROADMAP)
 		.overviewMapControl(true)
 		.panControl(true)
@@ -81,33 +109,12 @@ public class MainApp extends Application implements MapComponentInitializedListe
 		.zoom(15);
 
 		map = mapView.createMap(mapOptions);
-		
-		ArrayList<Place> P;
-		ArrayList<Trajectory> T;
-		Set<String> C;
-		double ep, sg;
-		Debug._PrintL("sg: " + Env.sg +"  ep:" + Env.ep + "  BlockSize: " + Env.B);
-
-		P = Main.loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/places.txt");
-		T = Main.loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/4sq/check-ins.txt");
-		C = Main.loadCategories();
-		ep = Env.ep;
-		sg = Env.sg;
-
-		
-		long cpuTimeElapsed;
-		double [] t = new double[1];
-		
-	
-		Miner skeleton = new SkeletonRegMiner(P, T, C, ep, sg);
-		cpuTimeElapsed = Util.getCpuTime();
-		ArrayList<PRegion> results = skeleton.mine();
-		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[0] = cpuTimeElapsed/(double)1000000000;
 	
 		for (PRegion pRegion: results) {
-			if (pRegion.P.size() > 1) {
+			if (pRegion.S.length() > 1) {
 				System.out.println(pRegion);
 				printTrns(pRegion.trns);
+				System.out.println();
 //				break;
 			}
 		}
@@ -156,7 +163,7 @@ public class MainApp extends Application implements MapComponentInitializedListe
 						.strokeWeight(1.0);
 						Circle circle = new Circle(circleOptions);
 						map.addMapShape(circle);
-//						printNeighbors(trn.visits.get(i).place, trn.neighbors, colorStr);
+//						printNeighbors(trn.visits.get(i).place, trn.neighbors(), colorStr);
 					}
 					
 				}
@@ -262,39 +269,39 @@ public class MainApp extends Application implements MapComponentInitializedListe
 
 
 	public void setMarkerIcon(Transition trn, Place venue, MarkerOptions markerOptions) {
-		if (venue.category.contains("Coffee")) {
+//		if (venue.category.contains("Coffee")) {
+//			markerOptions.position( new LatLong(venue.lat, venue.lon) )
+//			.icon("icon/coffee.png")
+//			.title(trn.toString() + " " + venue.toString());
+//		} else if (venue.category.contains("Office")) {
+//			markerOptions.position( new LatLong(venue.lat, venue.lon) )
+//			.icon("icon/office.png")
+//			.title(trn.toString() + " " + venue.toString());
+//		} else if (venue.category.contains("Home")) {
+//			markerOptions.position( new LatLong(venue.lat, venue.lon) )
+//			.icon("icon/home.png")
+//			.title(trn.toString() + " " + venue.toString());
+//		} else if (venue.category.contains("College")) {
+//			markerOptions.position( new LatLong(venue.lat, venue.lon) )
+//			.icon("icon/school.png")
+//			.title(trn.toString() + " " + venue.toString());
+//		} else if (venue.category.contains("Restaurant")) {
+//			markerOptions.position( new LatLong(venue.lat, venue.lon) )
+//			.icon("icon/restaurant.png")
+//			.title(trn.toString() + " " + venue.toString());
+//		} else if (venue.category.contains("School")) {
+//			markerOptions.position( new LatLong(venue.lat, venue.lon) )
+//			.icon("icon/school.png")
+//			.title(trn.toString() + " " + venue.toString());
+//		} else if (venue.category.contains("Bank")) {
+//			markerOptions.position( new LatLong(venue.lat, venue.lon) )
+//			.icon("icon/bank.png")
+//			.title(trn.toString() + " " + venue.toString());
+//		} else {
 			markerOptions.position( new LatLong(venue.lat, venue.lon) )
-			.icon("icon/coffee.png")
+			.icon("icon/" + venue.category.substring(0, 1).toLowerCase()+ ".png")
 			.title(trn.toString() + " " + venue.toString());
-		} else if (venue.category.contains("Office")) {
-			markerOptions.position( new LatLong(venue.lat, venue.lon) )
-			.icon("icon/office.png")
-			.title(trn.toString() + " " + venue.toString());
-		} else if (venue.category.contains("Home")) {
-			markerOptions.position( new LatLong(venue.lat, venue.lon) )
-			.icon("icon/home.png")
-			.title(trn.toString() + " " + venue.toString());
-		} else if (venue.category.contains("College")) {
-			markerOptions.position( new LatLong(venue.lat, venue.lon) )
-			.icon("icon/school.png")
-			.title(trn.toString() + " " + venue.toString());
-		} else if (venue.category.contains("Restaurant")) {
-			markerOptions.position( new LatLong(venue.lat, venue.lon) )
-			.icon("icon/restaurant.png")
-			.title(trn.toString() + " " + venue.toString());
-		} else if (venue.category.contains("School")) {
-			markerOptions.position( new LatLong(venue.lat, venue.lon) )
-			.icon("icon/school.png")
-			.title(trn.toString() + " " + venue.toString());
-		} else if (venue.category.contains("Bank")) {
-			markerOptions.position( new LatLong(venue.lat, venue.lon) )
-			.icon("icon/bank.png")
-			.title(trn.toString() + " " + venue.toString());
-		} else {
-			markerOptions.position( new LatLong(venue.lat, venue.lon) )
-			.icon("icon/dot.png")
-			.title(trn.toString() + " " + venue.toString());
-		}
+//		}
 	}
 
 	
