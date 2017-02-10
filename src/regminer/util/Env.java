@@ -18,7 +18,6 @@ public class Env {
 	public static HashMap<Edge, Integer> Edge_Map;
 	
 	public static HashMap<String, Integer> Cate_Id;
-	public static HashMap<Integer, String> Cate_Str;
 	
 	public final static double MaxCoord = 1.0;
 	
@@ -26,6 +25,9 @@ public class Env {
 
 	public static double lambda = 0.0001;
 	
-	public final static double ep = 0.005;
-	public final static double sg = 50;
+	public final static double ep = 0.01;
+	public final static double sg = 25;
+	
+	public final static long MaxDays = 1;
+	public final static long MaxTimeGap = 60*24*MaxDays; // in minutes
 }

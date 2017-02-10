@@ -2,13 +2,16 @@ package regminer;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 
+
 import regminer.algorithm.Miner;
-import regminer.algorithm.RegMiner;
 import regminer.algorithm.SkeletonRegMiner;
 import regminer.struct.PRegion;
 import regminer.struct.Place;
@@ -28,16 +31,20 @@ public class Main {
 
 	
 	public static void main(String[] args) {
-		Debug._PrintL("max memory size: " + java.lang.Runtime.getRuntime().maxMemory()/(double)1024/(double)1024/(double)1024 + "GBs");
+		
+		final String dataName = "UK";	
+
+		
+		Debug._PrintL(dataName + "\tmax memory size: " + java.lang.Runtime.getRuntime().maxMemory()/(double)1024/(double)1024/(double)1024 + "GBs");
 		ArrayList<Place> P=null;
 		ArrayList<Trajectory> T=null;
 		Set<String> C=null;
 		double ep, sg;
 		
-		Debug._PrintL("sg: " + Env.sg +"  ep:" + Env.ep + "  BlockSize: " + Env.B);
+		Debug._PrintL("sup: " + Env.sg +"  ep:" + Env.ep + "  time gap: " + Env.MaxTimeGap + "  BlockSize: " + Env.B);
 
-		P = loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/tsmc2014/places.txt");
-		T = loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/tsmc2014/check-ins.txt");
+		P = loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/"+dataName+"/places.txt");
+		T = loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/"+dataName+"/check-ins.txt");
 		C = loadCategories();
 		ep = Env.ep;
 		sg = Env.sg;
@@ -47,15 +54,15 @@ public class Main {
 		ArrayList<PRegion> results1 = new ArrayList<PRegion>();
 		ArrayList<PRegion> results2 = new ArrayList<PRegion>();
 		
-//		Miner skeleton = new SkeletonRegMiner(P, T, C, ep, sg);
-//		cpuTimeElapsed = Util.getCpuTime();
-//		results1 = skeleton.mine();
-//		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[0] = cpuTimeElapsed/(double)1000000000;
-		
-		Miner reg = new RegMiner(P, T, C, ep, sg);
+		Miner skeleton = new SkeletonRegMiner(P, T, C, ep, sg);
 		cpuTimeElapsed = Util.getCpuTime();
-		results2 = reg.mine();
-		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[1] = cpuTimeElapsed/(double)1000000000;
+		results1 = skeleton.mine();
+		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[0] = cpuTimeElapsed/(double)1000000000;
+		
+//		Miner reg = new RegMiner(P, T, C, ep, sg);
+//		cpuTimeElapsed = Util.getCpuTime();
+//		results2 = reg.mine();
+//		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[1] = cpuTimeElapsed/(double)1000000000;
 		
 		System.out.println("# pRegions: " + results1.size() + "\t" + results2.size());
 		System.out.println("time:" + t[0] +"\t"+t[1]);
@@ -64,8 +71,9 @@ public class Main {
 	
 	public static ArrayList<Trajectory> loadTrajectories(String fpath) {
 		Debug._PrintL("----Start loading trajectories----");
-		ArrayList<Trajectory> tras = new ArrayList<Trajectory>();
+		ArrayList<Trajectory> trajectories = new ArrayList<Trajectory>();
 
+		int trajCnt = 0;
 		BufferedReader in;
 		try {
 			in = new BufferedReader(new FileReader(new File(fpath)));
@@ -74,8 +82,8 @@ public class Main {
 			long idLong = 0;
 			for (String line = in.readLine(); line != null; line = in.readLine())
 			{
+				trajCnt++;
 				String [] tokens = line.split("\t");
-				String id = tokens[0];
 
 				Trajectory traj = new Trajectory(++idLong);
 
@@ -86,30 +94,43 @@ public class Main {
 				{
 					String [] checkin = checkins[i].split(",");
 					
-					Visit visit;
-					if(checkin.length > 1)
-						visit = new Visit(checkin[0].trim(), checkin[1]);
-					else
-						visit = new Visit(checkin[0].trim());
-					
-					if (visit.place != null && prev != null && (prev.place.category.equals(visit.place.category) && prev.place.loc.distance(visit.place.loc) <= Env.lambda))
-						continue;
+					try {
+						Visit visit = new Visit(checkin[0].trim(), checkin[1].trim());
 
-					if (visit.place != null && (prev == null || !prev.place.equals(visit.place) )) {
-						traj.add(visit);
-						prev = visit;
+
+						if (visit.place == null) continue;
+						else if (prev != null && prev.place.equals(visit.place)) continue;
+						else if (prev != null && (prev.place.category.equals(visit.place.category) && prev.place.loc.distance(visit.place.loc) <= Env.lambda)) continue;
+
+						if (prev == null || (visit.timestamp - prev.timestamp) <= Env.MaxTimeGap) {
+							traj.add(visit);
+							prev = visit;
+						}
+						else {
+							trajectories.add(traj);
+							traj = new Trajectory(++idLong);
+							traj.add(visit);
+							prev = visit;
+						}
+					} catch (ParseException e1) {
+						System.err.println(checkin[0]+","+checkin[1]+"|");
 					}
+
 				}
-				tras.add(traj);
+				if (traj.length() > 0)
+					trajectories.add(traj);
 			}
 			in.close();
-		} catch (Exception e) {
+			
+		} catch (FileNotFoundException e) {
 			e.printStackTrace();
-		} 
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
-		Debug._PrintL("# trajectories: " + tras.size());
+		Debug._PrintL("# trajectories: " + trajCnt + "-->" + trajectories.size());
 		Debug._PrintL("----Complete loading trajectories----\n");
-		return tras;
+		return trajectories;
 	}
 
 
@@ -118,7 +139,6 @@ public class Main {
 		Debug._PrintL("----Start loading POIs----");
 		Env.Place_Map = new HashMap<String, Place>();
 		Env.Cate_Id = new HashMap<String, Integer>();
-		Env.Cate_Str = new HashMap<Integer, String>();
 
 		ArrayList<Place> POIs = new ArrayList<Place>();
 
@@ -139,16 +159,19 @@ public class Main {
 				id = tokens[0].trim();
 				lat = Double.parseDouble(tokens[1].trim());
 				lon = Double.parseDouble(tokens[2].trim());
-				int pos = tokens[3].lastIndexOf("::");
-				String category = tokens[3].substring((pos > 0? pos+2: 0));
+				String category;
+				if (tokens.length == 4) {
+					int pos = tokens[3].lastIndexOf("::");
+					category = tokens[3].substring((pos > 0? pos+2: 0));
+				}
+				else continue;
 
 				Place p = new Place(id, lat, lon, category);
 
 				Env.Place_Map.put(id, p);
 				if (!Env.Cate_Id.containsKey(category))
 				{
-					Env.Cate_Id.put(category, catCnt);
-					Env.Cate_Str.put(catCnt++, category);
+					Env.Cate_Id.put(category, catCnt++);
 				}
 
 				POIs.add(p);

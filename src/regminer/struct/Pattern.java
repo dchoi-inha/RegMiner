@@ -22,6 +22,13 @@ public class Pattern implements Iterable<String> {
 		seq.add(cate);
 	}
 	
+	public Pattern(String[] strings) {
+		seq = new ArrayList<String>();
+		for (int i=0; i < strings.length; i++) {
+			seq.add(strings[i]);
+		}
+	}
+
 	public void add(String cate) {
 		seq.add(cate);
 	}
@@ -56,6 +63,34 @@ public class Pattern implements Iterable<String> {
 	@Override
 	public Iterator<String> iterator() {
 		return (Iterator<String>) seq.iterator();
+	}
+	
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof Pattern) {
+			Pattern other = (Pattern) obj;
+			if (this.length() == other.length()) {
+				for (int i = 0; i < length(); i++) {
+					if (!this.seq.get(i).contains(other.seq.get(i)) && !other.seq.get(i).contains(this.seq.get(i)))
+						return false;
+				}
+				return true;
+			}
+			return false;
+		}
+		return false;
+	}
+	
+	public boolean startWith(Pattern other) {
+		if (this.length() >= other.length()) {
+			for (int i = 0; i < other.length(); i++) {
+				if (!this.seq.get(i).contains(other.seq.get(i)) && !other.seq.get(i).contains(this.seq.get(i)))
+					return false;
+			}
+			return true;
+		}
+		return false;
 	}
 
 	

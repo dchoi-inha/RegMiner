@@ -14,6 +14,8 @@ import com.lynden.gmapsfx.shapes.Polyline;
 import com.lynden.gmapsfx.shapes.PolylineOptions;
 import com.lynden.gmapsfx.shapes.Circle;
 import com.lynden.gmapsfx.shapes.CircleOptions;
+import com.lynden.gmapsfx.shapes.HeatmapLayer;
+import com.lynden.gmapsfx.shapes.HeatmapLayerOptions;
 
 import javafx.application.Application;
 import static javafx.application.Application.launch;
@@ -34,6 +36,7 @@ import regminer.algorithm.RegMiner;
 import regminer.algorithm.SkeletonRegMiner;
 import regminer.struct.NeighborTset;
 import regminer.struct.PRegion;
+import regminer.struct.Pattern;
 import regminer.struct.Place;
 import regminer.struct.Trajectory;
 import regminer.struct.Transition;
@@ -69,14 +72,17 @@ public class MainApp extends Application implements MapComponentInitializedListe
 	@Override
 	public void mapInitialized() {
 		
+		final String dataName = "UK";	
+		
 		ArrayList<Place> P;
 		ArrayList<Trajectory> T;
 		Set<String> C;
 		double ep, sg;
-		Debug._PrintL("sg: " + Env.sg +"  ep:" + Env.ep + "  BlockSize: " + Env.B);
+		Debug._PrintL(dataName + "\tmax memory size: " + java.lang.Runtime.getRuntime().maxMemory()/(double)1024/(double)1024/(double)1024 + "GBs");
+		Debug._PrintL("sup: " + Env.sg +"  ep:" + Env.ep + "  time gap: " + Env.MaxTimeGap + "  BlockSize: " + Env.B);
 
-		P = Main.loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/tsmc2014/places.txt");
-		T = Main.loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/tsmc2014/check-ins-sample.txt");
+		P = Main.loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/"+dataName+"/places.txt");
+		T = Main.loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/"+dataName+"/check-ins.txt");
 		C = Main.loadCategories();
 		ep = Env.ep;
 		sg = Env.sg;
@@ -89,7 +95,7 @@ public class MainApp extends Application implements MapComponentInitializedListe
 		double [] t = new double[1];
 		
 	
-		Miner regminer = new RegMiner(P, T, C, ep, sg);
+		Miner regminer = new SkeletonRegMiner(P, T, C, ep, sg);
 		cpuTimeElapsed = Util.getCpuTime();
 		ArrayList<PRegion> results = regminer.mine();
 		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[0] = cpuTimeElapsed/(double)1000000000;
@@ -106,30 +112,41 @@ public class MainApp extends Application implements MapComponentInitializedListe
 		.scaleControl(true)
 		.streetViewControl(true)
 		.zoomControl(false)
-		.zoom(15);
+		.zoom(10);
 
 		map = mapView.createMap(mapOptions);
+		
+		HeatmapLayerOptions heatMapOptions = new HeatmapLayerOptions();
+		ArrayList<LatLong> heatMapData = new ArrayList<LatLong>();
 	
 		for (PRegion pRegion: results) {
-			if (pRegion.S.length() > 1) {
-				System.out.println(pRegion);
-				printTrns(pRegion.trns);
-				System.out.println();
-//				break;
+//			Pattern visiblePattern = new Pattern(new String[] {"Hotel", "Coffee Shop"});
+			Pattern visiblePattern = new Pattern(new String[] {"Home (private)","Neighborhood"});
+//			Pattern visiblePattern = new Pattern(new String[] {"Office", "Train Station"});			
+//			Pattern visiblePattern = new Pattern(new String[] {"Office", "Coffee Shop"});
+			if (pRegion.S.equals(visiblePattern)) {
+//			if (pRegion.S.length() == 3) {
+				Debug._PrintL(pRegion.toString());
+				printTrns(pRegion.trns, heatMapData);
+				Debug._Print("\n");
 			}
 		}
 		
+		heatMapOptions.radius(Env.ScaleRatio*Env.ep*11).opacity(0.8).data(new MVCArray(heatMapData.toArray()));
+		HeatmapLayer heatMap = new HeatmapLayer(heatMapOptions);
+		heatMap.setMap(map);
 		Debug._PrintL("Elapsed time: " + t[0]);
 		
 	}
 	
-	public void printTrns(Tset trns) {
+	public void printTrns(Tset trns, ArrayList<LatLong> heatMapData) {
 		Random rand = new Random();
 		int k = 0;
+		
 		for (Transition trn: trns)
 		{
 			k++;
-			System.out.print(trn.toString()+ "(");
+			Debug._Print(trn.toString()+ "(");
 
 			ArrayList<LatLong> path = new ArrayList<LatLong>();
 			PolylineOptions lineOptions = new PolylineOptions();
@@ -143,12 +160,12 @@ public class MainApp extends Application implements MapComponentInitializedListe
 				Visit visit = trn.visits.get(i);
 				Place p = visit.place;
 				if (p != null) {
-					System.out.print(p.category + "->");		
+					Debug._Print(p.category + "->");		
 					path.add(new LatLong(p.lat, p.lon));
 					MarkerOptions markerOptions = new MarkerOptions();
 					setMarkerIcon(trn, p, markerOptions); 
 					Marker marker = new Marker(markerOptions);
-					map.addMarker(marker);
+//					map.addMarker(marker);
 
 					if (k < 2) {
 						CircleOptions circleOptions = new CircleOptions();
@@ -156,31 +173,31 @@ public class MainApp extends Application implements MapComponentInitializedListe
 						colorStr2 = colorStr2.replace("0x", "#");
 						colorStr2 = colorStr2.replace("ff", "");
 						circleOptions.center(new LatLong(p.lat, p.lon))
-						.radius(Env.ScaleRatio*Env.ep*11)
+						.radius(Env.ScaleRatio*Env.ep*12)
 						.fillColor(colorStr2)
 						.fillOpacity(0)
 						.strokeColor(colorStr)
 						.strokeWeight(1.0);
 						Circle circle = new Circle(circleOptions);
-						map.addMapShape(circle);
+//						map.addMapShape(circle);
 //						printNeighbors(trn.visits.get(i).place, trn.neighbors(), colorStr);
 					}
 					
 				}
 			}
-			System.out.println(")");
+			Debug._PrintL(")");
 			
 			lineOptions.path(new MVCArray(path.toArray()))
 			.geodesic(true)
 			.strokeWeight(1.0)
-			.strokeColor(colorStr);
-			
+			.strokeColor(colorStr);			
 			Polyline line = new Polyline(lineOptions);
-			
-			map.addMapShape(line);
+//			map.addMapShape(line);
 			
 
+			heatMapData.addAll(path);
 		}
+		
 	}
 
 
@@ -249,7 +266,7 @@ public class MainApp extends Application implements MapComponentInitializedListe
 					map.addMarker(marker);
 				}
 			}
-			System.out.println(")");
+			Debug._PrintL(")");
 			String colorStr = Color.rgb(rand.nextInt(256), rand.nextInt(256), rand.nextInt(256)).toString();
 			colorStr = colorStr.replace("0x", "#");
 			colorStr = colorStr.replace("ff", "");

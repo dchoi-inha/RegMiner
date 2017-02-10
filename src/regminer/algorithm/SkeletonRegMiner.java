@@ -29,8 +29,11 @@ public class SkeletonRegMiner extends Miner {
 
 		// 2. Compute pRegions for each pattern
 		for (Tset trnSet: freqTrnSets) {
-			Pattern seq = trnSet.pattern;			
+			Pattern seq = trnSet.pattern;
+			
+			if (seq.length() < 2) continue;
 
+//			Debug._PrintL("\n" + seq + "("+trnSet.size()+")" + "(" + trnSet.weight() + ")");
 			// construct the R-tree on POIs in trnSet
 			RTree rt = new RTree();
 			HashSet<Place> places = trnSet.computePOIs();
@@ -56,6 +59,9 @@ public class SkeletonRegMiner extends Miner {
 //						Debug._PrintL(pRegion.toString());
 					results.add(pRegion);
 				}
+			}
+			else {
+				
 			}
 		}
 
@@ -97,7 +103,10 @@ public class SkeletonRegMiner extends Miner {
 	
 		for (String cate: freqCateSet)
 		{
+			/***************************************************************************/
 			if (cate.equals(tSet.pattern.seq.get(tSet.pattern.seq.size()-1))) continue;
+			/***************************************************************************/
+
 			Tset tSetP = transitionGrow(tSet, seq, cate);
 
 			if (tSetP.weight() >= this.sg) {

@@ -26,7 +26,8 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 	private MBR mbr;
 	private MBR embr;
 	
-//	private double distSum;
+	private double distSum;
+	
 
 	public Transition(Trajectory traj, Pattern pattern, int s, int e)
 	{
@@ -40,17 +41,10 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 		this.neighbors = null;
 		this.mbr = null;
 		
-		this.embr = traj.visits.get(s).embr;
-		if (this.embr != null)
-			this.embr.enlarge(Env.ep);
+//		this.embr = traj.visits.get(s).embr;
+//		if (this.embr != null) this.embr.enlarge(Env.ep);
 		
-		
-//		this.distSum = 0;
-//		for (int i=0; i < this.length()-1; i++) {
-//			Place p1 = visits.get(i).place;
-//			Place p2 = visits.get(i+1).place;
-//			this.distSum += p1.loc.distance(p2.loc); 
-//		}
+		this.distSum = -1;
 	}
 	
 	
@@ -85,18 +79,12 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 		this.e = e;
 		this.visits = traj.visits.subList(s, e+1);
 		
-		this.embr = traj.visits.get(s).embr;
-		if (this.embr != null)
-			this.embr.enlarge(Env.ep);
+//		this.embr = traj.visits.get(s).embr;
+//		if (this.embr != null)
+//			this.embr.enlarge(Env.ep);
 		
-		this.mbr = null; // to update the MBR
-		
-//		this.distSum = 0;
-//		for (int i=0; i < this.length()-1; i++) {
-//			Place p1 = visits.get(i).place;
-//			Place p2 = visits.get(i+1).place;
-//			this.distSum += p1.loc.distance(p2.loc); 
-//		}
+//		this.mbr = null; // to update the MBR
+		this.distSum = -1; // to update distSum
 	}
 	
 	public int length() {
@@ -131,11 +119,23 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 		return density;
 	}
 	
+	public double distSum() {
+		if (distSum == -1) {
+			this.distSum = 0;
+			
+			for (int i=0; i < this.length()-1; i++) {
+				Place p1 = this.visits.get(i).place;
+				Place p2 = this.visits.get(i+1).place;
+				this.distSum = p1.loc.distance(p2.loc);
+			}
+		}
+		return distSum;
+	}
+	
 	public void setDensity(double density) {
-//		double factor = Env.ep/this.distSum;
-//		this.density = density*Math.min(factor, 1);
-		
+//		double penalty = Math.min(Env.ep/this.distSum, 1);		
 		double penalty = (double) this.pattern.length() / (double) this.length();
+//		double penalty = 1.0 / (double) this.length();		
 		
 		this.density = density*penalty;
 	}
@@ -153,7 +153,7 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 //	}
 	
 	public String toString() {
-		String str = "T"+ traj.uid+"["+s+":"+e+"]"+"(density="+density+")"; 
+		String str = "T"+ traj.uid+"["+s+":"+e+"]<"+pattern.toString()+">(density="+density+")"; 
 //		String str = "T"+ traj.uid+"["+s+":"+e+"]"+pattern.toString()+"(delta="+density+")"; 
 //		str += "\n" + strPOIs();
 		
@@ -252,9 +252,9 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 		return this.mbr;
 	}
 	
-//	public MBR eMBR() {
-//		return this.embr;
-//	}
+	public MBR eMBR() {
+		return this.embr;
+	}
 
 
 	
