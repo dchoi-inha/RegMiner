@@ -11,7 +11,7 @@ import regminer.util.Env;
 
 public class Visit {
 
-	public double timestamp;
+	public double timestamp; // in minutes
 	public Place place;
 
 	// to represent the MBR from this visit to the end of the trajectory
@@ -24,7 +24,7 @@ public class Visit {
 		DateFormat format3 = new SimpleDateFormat("EE MMM dd HH:mm:ss yyyy", Locale.ENGLISH);// Wed Jan 09 18:03:42 2013
 
 		if (timestamp.matches("([0-9]{4})-([0-9]{2})-([0-9]{2}) ([0-9]{2}):([0-9]{2}):([0-9]{2})"))
-			this.timestamp = format1.parse(timestamp).getTime()/(1000*60);
+			this.timestamp = format1.parse(timestamp).getTime()/(1000*60); 
 		else if (timestamp.matches("([0-9]{2})-([a-zA-Z]{3})-([0-9]{4}) ([0-9]{2}):([0-9]{2}):([0-9]{2})"))
 			this.timestamp = format2.parse(timestamp).getTime()/(1000*60);
 		else

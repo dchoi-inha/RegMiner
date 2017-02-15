@@ -15,7 +15,7 @@ import regminer.slist.SLlist;
  * @date 21 Dec 2016
  *
  */
-public class Tset implements Iterable<Transition> {
+public class Tset implements Iterable<Transition>, Comparable<Tset>{
 	public Pattern pattern;
 	public ArrayList<Transition> trns;
 	
@@ -104,6 +104,11 @@ public class Tset implements Iterable<Transition> {
 
 	public void incWeight(double incWeight) {
 		this.weight += incWeight;		
+	}
+
+	@Override
+	public int compareTo(Tset o) {
+		return o.size() - this.size(); // descending order
 	}
 	
 	

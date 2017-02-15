@@ -45,5 +45,9 @@ public class HeatmapLayer extends JavascriptObject {
     public void setData(MVCArray heatMapData) {
         invokeJavascript("setData", heatMapData);
     }
+    
+    public void setOptions(HeatmapLayerOptions opts) {
+    	invokeJavascript("setOptions", opts);
+    }
 
 }

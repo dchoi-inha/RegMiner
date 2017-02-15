@@ -29,8 +29,8 @@ public class Util {
 	{
 		double minLat = Double.MAX_VALUE;
 		double minLon = Double.MAX_VALUE;
-		double maxLat = Double.MIN_VALUE;
-		double maxLon = Double.MIN_VALUE;
+		double maxLat = -Double.MAX_VALUE;
+		double maxLon = -Double.MAX_VALUE;
 		for (Place poi: POIs) {
 			minLat = Math.min(minLat, poi.lat);
 			minLon = Math.min(minLon, poi.lon);
@@ -53,17 +53,18 @@ public class Util {
 			poi.setLoc(x, y);
 		}
 		
-		double scaleRatio = getDistLatLon(minLat, minLon, maxLat, maxLon)/Math.sqrt(Math.pow(maxX-minX, 2)+Math.pow(maxY-minY, 2));
+		double coordLen = Math.max(maxX-minX, maxY-minY);
 		
 		for (Place poi: POIs) {
-			double x = (poi.loc.getX() - minX) * Env.MaxCoord / (maxX-minX);
-			double y = (poi.loc.getY() - minY) * Env.MaxCoord / (maxY-minY);
+			double x = (poi.loc.getX() - minX) * Env.MaxCoord / (coordLen);
+			double y = (poi.loc.getY() - minY) * Env.MaxCoord / (coordLen);
 			poi.setLoc(x, y);
 		}
 		
-		return scaleRatio*Math.min((maxX-minX)/Env.MaxCoord, (maxY-minY)/Env.MaxCoord);			
+		return Env.MaxCoord/coordLen;
+		
 	}
-	private static double getDistLatLon(double lat1, double lon1, double lat2, double lon2)
+	private static double getDistLatLon(double lat1, double lon1, double lat2, double lon2) // return distance in kilometers
 	{
 		double R = 6371.0;
 		double dLat = Math.toRadians(lat2-lat1);

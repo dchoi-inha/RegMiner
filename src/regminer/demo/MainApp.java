@@ -10,6 +10,7 @@ import com.lynden.gmapsfx.javascript.object.MapOptions;
 import com.lynden.gmapsfx.javascript.object.MapTypeIdEnum;
 import com.lynden.gmapsfx.javascript.object.Marker;
 import com.lynden.gmapsfx.javascript.object.MarkerOptions;
+import com.lynden.gmapsfx.javascript.object.WeightedLocation;
 import com.lynden.gmapsfx.shapes.Polyline;
 import com.lynden.gmapsfx.shapes.PolylineOptions;
 import com.lynden.gmapsfx.shapes.Circle;
@@ -18,6 +19,8 @@ import com.lynden.gmapsfx.shapes.HeatmapLayer;
 import com.lynden.gmapsfx.shapes.HeatmapLayerOptions;
 
 import javafx.application.Application;
+import javafx.beans.value.ObservableValue;
+
 import static javafx.application.Application.launch;
 
 import java.io.BufferedReader;
@@ -33,7 +36,7 @@ import javafx.stage.Stage;
 import regminer.Main;
 import regminer.algorithm.Miner;
 import regminer.algorithm.RegMiner;
-import regminer.algorithm.SkeletonRegMiner;
+import regminer.algorithm.RegMiner;
 import regminer.struct.NeighborTset;
 import regminer.struct.PRegion;
 import regminer.struct.Pattern;
@@ -72,34 +75,34 @@ public class MainApp extends Application implements MapComponentInitializedListe
 	@Override
 	public void mapInitialized() {
 		
-		final String dataName = "UK";	
+		final String dataName = "NY";
+		
 		
 		ArrayList<Place> P;
 		ArrayList<Trajectory> T;
 		Set<String> C;
-		double ep, sg;
+		Env.NeighborSize = 10; // kilometers
 		Debug._PrintL(dataName + "\tmax memory size: " + java.lang.Runtime.getRuntime().maxMemory()/(double)1024/(double)1024/(double)1024 + "GBs");
-		Debug._PrintL("sup: " + Env.sg +"  ep:" + Env.ep + "  time gap: " + Env.MaxTimeGap + "  BlockSize: " + Env.B);
 
 		P = Main.loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/"+dataName+"/places.txt");
 		T = Main.loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/"+dataName+"/check-ins.txt");
 		C = Main.loadCategories();
-		ep = Env.ep;
-		sg = Env.sg;
 		
-		double avgLat = P.stream().mapToDouble(val -> val.lat).average().getAsDouble();
-		double avgLon = P.stream().mapToDouble(val -> val.lon).average().getAsDouble();
-
+//		Env.NeighborSize = Env.ep / Env.ScaleFactor;		
+		Env.ep = Env.NeighborSize * Env.ScaleFactor;
+		Debug._PrintL("sup: " + Env.sg +"  ep(Kmeters):" + Env.NeighborSize + " ep: " + Env.ep + "  time gap: " + Env.MaxTimeGap + "  BlockSize: " + Env.B);
 		
 		long cpuTimeElapsed;
 		double [] t = new double[1];
 		
 	
-		Miner regminer = new SkeletonRegMiner(P, T, C, ep, sg);
+		Miner regminer = new RegMiner(P, T, C, Env.ep, Env.sg);
 		cpuTimeElapsed = Util.getCpuTime();
 		ArrayList<PRegion> results = regminer.mine();
 		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[0] = cpuTimeElapsed/(double)1000000000;
 		
+		double avgLat = P.stream().mapToDouble(val -> val.lat).average().getAsDouble();
+		double avgLon = P.stream().mapToDouble(val -> val.lon).average().getAsDouble();
 		
 		//Set the initial properties of the map.
 		MapOptions mapOptions = new MapOptions();
@@ -117,29 +120,48 @@ public class MainApp extends Application implements MapComponentInitializedListe
 		map = mapView.createMap(mapOptions);
 		
 		HeatmapLayerOptions heatMapOptions = new HeatmapLayerOptions();
-		ArrayList<LatLong> heatMapData = new ArrayList<LatLong>();
+		ArrayList<WeightedLocation> heatMapData = new ArrayList<WeightedLocation>();
 	
 		for (PRegion pRegion: results) {
-//			Pattern visiblePattern = new Pattern(new String[] {"Hotel", "Coffee Shop"});
-			Pattern visiblePattern = new Pattern(new String[] {"Home (private)","Neighborhood"});
-//			Pattern visiblePattern = new Pattern(new String[] {"Office", "Train Station"});			
-//			Pattern visiblePattern = new Pattern(new String[] {"Office", "Coffee Shop"});
-			if (pRegion.S.equals(visiblePattern)) {
-//			if (pRegion.S.length() == 3) {
+//			Pattern visiblePattern = new Pattern(new String[] {"Coffee Shop", "Home"});
+//			Pattern visiblePattern = new Pattern(new String[] {"Grocery Store", "Home (private)"});
+			Pattern visiblePattern1 = new Pattern(new String[] {"Hotel", "Coffee Shop"});
+//			Pattern visiblePattern2 = new Pattern(new String[] {"Office", "Bar"});	
+			if (pRegion.S.equals(visiblePattern1) || pRegion.S.startWith(visiblePattern1)) {
+//			if (pRegion.S.length() > 1) {
 				Debug._PrintL(pRegion.toString());
 				printTrns(pRegion.trns, heatMapData);
 				Debug._Print("\n");
+				
+				avgLat = pRegion.P.stream().mapToDouble(val -> val.lat).average().getAsDouble();
+				avgLon = pRegion.P.stream().mapToDouble(val -> val.lon).average().getAsDouble();
 			}
 		}
 		
-		heatMapOptions.radius(Env.ScaleRatio*Env.ep*11).opacity(0.8).data(new MVCArray(heatMapData.toArray()));
+		map.setCenter(new LatLong(avgLat, avgLon));
+		
+		heatMapOptions.radius(metersToEquatorPixels(Env.ep / Env.ScaleFactor * 100, map)).opacity(0.8).data(new MVCArray(heatMapData.toArray()));
 		HeatmapLayer heatMap = new HeatmapLayer(heatMapOptions);
 		heatMap.setMap(map);
 		Debug._PrintL("Elapsed time: " + t[0]);
 		
+		
+		map.zoomProperty().addListener((ObservableValue<? extends Number> obs, Number o, Number n) -> {
+            heatMap.setOptions(heatMapOptions.radius(metersToEquatorPixels(Env.ep / Env.ScaleFactor * 100, map)));
+        });
+				
 	}
 	
-	public void printTrns(Tset trns, ArrayList<LatLong> heatMapData) {
+
+
+	public static double metersToEquatorPixels(double meters, GoogleMap map) {
+		double metresPerPixel = 40075016.686 * Math.abs(Math.cos(map.getCenter().getLatitude() * 180/Math.PI)) / Math.pow(2, map.getZoom()+8);
+		return meters/ metresPerPixel;     
+	}
+
+
+	
+	public void printTrns(Tset trns, ArrayList<WeightedLocation> heatMapData) {
 		Random rand = new Random();
 		int k = 0;
 		
@@ -161,7 +183,8 @@ public class MainApp extends Application implements MapComponentInitializedListe
 				Place p = visit.place;
 				if (p != null) {
 					Debug._Print(p.category + "->");		
-					path.add(new LatLong(p.lat, p.lon));
+					path.add(new LatLong(p.lat, p.lon)); 
+					heatMapData.add(new WeightedLocation(p.lat, p.lon, trn.density()));
 					MarkerOptions markerOptions = new MarkerOptions();
 					setMarkerIcon(trn, p, markerOptions); 
 					Marker marker = new Marker(markerOptions);
@@ -173,7 +196,7 @@ public class MainApp extends Application implements MapComponentInitializedListe
 						colorStr2 = colorStr2.replace("0x", "#");
 						colorStr2 = colorStr2.replace("ff", "");
 						circleOptions.center(new LatLong(p.lat, p.lon))
-						.radius(Env.ScaleRatio*Env.ep*12)
+						.radius(Env.ep / Env.ScaleFactor * 1000)
 						.fillColor(colorStr2)
 						.fillOpacity(0)
 						.strokeColor(colorStr)
@@ -193,9 +216,6 @@ public class MainApp extends Application implements MapComponentInitializedListe
 			.strokeColor(colorStr);			
 			Polyline line = new Polyline(lineOptions);
 //			map.addMapShape(line);
-			
-
-			heatMapData.addAll(path);
 		}
 		
 	}

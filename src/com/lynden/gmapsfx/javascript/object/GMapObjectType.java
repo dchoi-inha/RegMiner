@@ -62,5 +62,6 @@ public interface GMapObjectType {
     public static final String DIRECTIONS_GEOCODED_WAYPOINT = "google.maps.DirectionsGeocodedWaypoint";
     
     public static final String HEAT_MAP = "google.maps.visualization.HeatmapLayer";
+    public static final String WEIGHTED_LOCATION = "google.maps.visualization.WeightedLocation";
     
 }

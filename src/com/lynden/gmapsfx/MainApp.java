@@ -330,7 +330,7 @@ public class MainApp extends Application implements MapComponentInitializedListe
                 "Rio de Janeiro - RJ",
                 TravelModes.DRIVING,
                 dw);
-        ds.getRoute(dr, this, renderer);
+//        ds.getRoute(dr, this, renderer);
         
         LatLong[] location = new LatLong[1];
         location[0] = new LatLong(-19.744056, -43.958699);

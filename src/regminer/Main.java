@@ -12,7 +12,7 @@ import java.util.Set;
 
 
 import regminer.algorithm.Miner;
-import regminer.algorithm.SkeletonRegMiner;
+import regminer.algorithm.RegMiner;
 import regminer.struct.PRegion;
 import regminer.struct.Place;
 import regminer.struct.Trajectory;
@@ -39,33 +39,31 @@ public class Main {
 		ArrayList<Place> P=null;
 		ArrayList<Trajectory> T=null;
 		Set<String> C=null;
-		double ep, sg;
-		
-		Debug._PrintL("sup: " + Env.sg +"  ep:" + Env.ep + "  time gap: " + Env.MaxTimeGap + "  BlockSize: " + Env.B);
 
 		P = loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/"+dataName+"/places.txt");
 		T = loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/"+dataName+"/check-ins.txt");
 		C = loadCategories();
-		ep = Env.ep;
-		sg = Env.sg;
 		
-		long cpuTimeElapsed;
-		double [] t = new double[2];
-		ArrayList<PRegion> results1 = new ArrayList<PRegion>();
-		ArrayList<PRegion> results2 = new ArrayList<PRegion>();
-		
-		Miner skeleton = new SkeletonRegMiner(P, T, C, ep, sg);
-		cpuTimeElapsed = Util.getCpuTime();
-		results1 = skeleton.mine();
-		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[0] = cpuTimeElapsed/(double)1000000000;
-		
-//		Miner reg = new RegMiner(P, T, C, ep, sg);
-//		cpuTimeElapsed = Util.getCpuTime();
-//		results2 = reg.mine();
-//		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[1] = cpuTimeElapsed/(double)1000000000;
-		
-		System.out.println("# pRegions: " + results1.size() + "\t" + results2.size());
-		System.out.println("time:" + t[0] +"\t"+t[1]);
+		double [] epArray = new double [] {0.01, 0.005, 0.001, 0.0005, 0.0001};
+		double [] sgArray = new double [] {10, 20, 30, 40, 50};
+
+		for (int i=0; i < sgArray.length; i++) {
+			Env.sg = sgArray[2];
+			Env.ep = epArray[i];
+			Debug._PrintL("sup: " + Env.sg +"  ep:" + Env.ep + "  time gap: " + Env.MaxTimeGap + "  BlockSize: " + Env.B);
+			
+			long cpuTimeElapsed;
+			double time = 0.0;
+			ArrayList<PRegion> result = new ArrayList<PRegion>();
+			
+			Miner skeleton = new RegMiner(P, T, C, Env.ep, Env.sg);
+			cpuTimeElapsed = Util.getCpuTime();
+			result = skeleton.mine();
+			cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; time = cpuTimeElapsed/(double)1000000000;
+			
+			Debug._PrintL("# pRegions: " + result.size());
+			Debug._PrintL("time:" + time);
+		}
 		
 	}
 	
@@ -73,7 +71,8 @@ public class Main {
 		Debug._PrintL("----Start loading trajectories----");
 		ArrayList<Trajectory> trajectories = new ArrayList<Trajectory>();
 
-		int trajCnt = 0;
+		int trajCnt = 0, pairCnt = 0;
+		double sumTimeGap = 0.0;
 		BufferedReader in;
 		try {
 			in = new BufferedReader(new FileReader(new File(fpath)));
@@ -98,20 +97,26 @@ public class Main {
 						Visit visit = new Visit(checkin[0].trim(), checkin[1].trim());
 
 
+						/************************************************ Filtering **********************************************************************/
 						if (visit.place == null) continue;
 						else if (prev != null && prev.place.equals(visit.place)) continue;
 						else if (prev != null && (prev.place.category.equals(visit.place.category) && prev.place.loc.distance(visit.place.loc) <= Env.lambda)) continue;
-
+						/************************************************ Filtering **********************************************************************/
+						
+						if (prev != null) {
+							sumTimeGap += (visit.timestamp - prev.timestamp); pairCnt++;
+						}
+						
 						if (prev == null || (visit.timestamp - prev.timestamp) <= Env.MaxTimeGap) {
 							traj.add(visit);
-							prev = visit;
 						}
 						else {
 							trajectories.add(traj);
 							traj = new Trajectory(++idLong);
 							traj.add(visit);
-							prev = visit;
 						}
+						
+						prev = visit;
 					} catch (ParseException e1) {
 						System.err.println(checkin[0]+","+checkin[1]+"|");
 					}
@@ -128,7 +133,7 @@ public class Main {
 			e.printStackTrace();
 		}
 
-		Debug._PrintL("# trajectories: " + trajCnt + "-->" + trajectories.size());
+		Debug._PrintL("# trajectories: " + trajCnt + "-->" + trajectories.size() +" avg time gap: " + (sumTimeGap / (double) pairCnt));
 		Debug._PrintL("----Complete loading trajectories----\n");
 		return trajectories;
 	}
@@ -177,14 +182,14 @@ public class Main {
 				POIs.add(p);
 			}
 			
-			Env.ScaleRatio = Util.convertToXY(POIs);
+			Env.ScaleFactor = Util.convertToXY(POIs);
 			in.close();
 		} catch (Exception e) {
 			Debug._Error(null, line);
 			e.printStackTrace();
 		} 
 
-		Debug._PrintL("# POIs: " + POIs.size() +"  Scale Ratio: " + Env.ScaleRatio + "  # categories: " + Env.Cate_Id.size());
+		Debug._PrintL("# POIs: " + POIs.size() +"  Scale factor: " + Env.ScaleFactor + "  # categories: " + Env.Cate_Id.size());
 		Debug._PrintL("----Complete loading POIs----\n");
 		return POIs;
 	}

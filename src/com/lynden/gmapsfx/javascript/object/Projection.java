@@ -39,4 +39,9 @@ public class Projection extends JavascriptObject {
         return null;
     }
     
+    
+    public double metersToEquatorPixels(double radiusInMeters) {
+    	return invokeJavascriptReturnValue("metersToEquatorPixels", Double.class, radiusInMeters);
+    }
+    
 }
