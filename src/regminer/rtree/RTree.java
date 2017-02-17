@@ -8,10 +8,10 @@ import java.util.PriorityQueue;
 
 import regminer.util.Debug;
 import regminer.util.Env;
-import regminer.struct.NeighborTset;
+import regminer.struct.NeighborPRouteSet;
 import regminer.struct.Place;
 import regminer.struct.Point;
-import regminer.struct.Transition;
+import regminer.struct.PRoute;
 
 public class RTree {
 	public static final int M = (int) Math.floor(Env.B/Entry.size);
@@ -64,7 +64,7 @@ public class RTree {
 	}
 	
 	
-	private void _neighborSearch(Node T, Transition trn, HashMap<Transition, Integer> results, double ep){
+	private void _neighborSearch(Node T, PRoute trn, HashMap<PRoute, Integer> results, double ep){
 		Entry e;
 		MBR range = trn.getMBR();
 		if (T.isleaf) leafCount++;
@@ -83,7 +83,7 @@ public class RTree {
 //							Debug._PrintL("postingTrns of " + p + " is empty");
 						}
 						else {
-							for (Transition neighbor: p.postingTrns())
+							for (PRoute neighbor: p.postingTrns())
 							{
 								if (results.containsKey(neighbor)) {
 									int freq = results.get(neighbor);
@@ -100,8 +100,8 @@ public class RTree {
 			} 
 		}
 	}
-	public HashMap<Transition, Integer> neighborhoodSearch(Transition trn, double ep) {
-		HashMap<Transition, Integer> results = new HashMap<Transition, Integer>();
+	public HashMap<PRoute, Integer> neighborhoodSearch(PRoute trn, double ep) {
+		HashMap<PRoute, Integer> results = new HashMap<PRoute, Integer>();
 		nodeCount = 0;
 		leafCount = 0;
 		_neighborSearch(R, trn, results, ep);

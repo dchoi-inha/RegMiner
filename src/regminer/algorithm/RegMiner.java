@@ -5,7 +5,6 @@ import java.util.*;
 import regminer.rtree.RTree;
 import regminer.struct.*;
 import regminer.util.Debug;
-import regminer.util.Env;
 
 /**
  * @author Dong-Wan Choi at Imperial College London
@@ -16,47 +15,82 @@ import regminer.util.Env;
 public class RegMiner extends Miner {
 
 	public RegMiner(ArrayList<Place> places, ArrayList<Trajectory> trajs,
-			Set<String> cateSet, double ep, double sg) {
-		super(places, trajs, cateSet, ep, sg);
+			Set<String> cateSet, double ep, double sg, double dt) {
+		super(places, trajs, cateSet, ep, sg, dt);
+	}
+	
+	public void splitTrajectoriesByTimeGap() {
+		ArrayList<Trajectory> newTrajectories = new ArrayList<Trajectory>();
+		
+		long id = 0;
+		for (Trajectory trajectory: this.trajs) {
+			Trajectory newTraj = new Trajectory(++id);
+			Visit prev = null;
+			for (Visit visit: trajectory) {
+				if (prev == null || (visit.timestamp - prev.timestamp) <= this.dt) {
+					newTraj.add(visit); 
+				} else {
+					newTrajectories.add(newTraj);
+					newTraj = new Trajectory(++id);
+					newTraj.add(visit);
+				}
+				prev = visit;
+			}
+			if (newTraj.length() > 0) newTrajectories.add(newTraj);
+		}
+		
+		this.trajs.clear();
+		this.trajs = newTrajectories;
+		
+		Debug._PrintL("# split trajectories: " + this.trajs.size());
 	}
 
 	@Override
 	public ArrayList<PRegion> mine() {
-		ArrayList<PRegion> results = new ArrayList<PRegion>();
+		Debug._PrintL("");
+		Debug._PrintL("--------------Start RegMiner----------");
+		
+		ArrayList<PRegion> pRegions = new ArrayList<PRegion>();
+
+		// 0. Split trajectories by time gap
+		splitTrajectoriesByTimeGap();
+		
+		
 		// 1. Find all frequent patterns along with their sets of transitions
-		ArrayList<Tset> freqTrnSets = new ArrayList<Tset>();
+		ArrayList<PRouteSet> freqTrnSets = new ArrayList<PRouteSet>();
 		compactGrow(freqTrnSets);		
 
+		
 		// 2. Compute pRegions for each pattern
-		for (Tset trnSet: freqTrnSets) {
-			Pattern seq = trnSet.pattern;
+		for (PRouteSet prSet: freqTrnSets) {
+			Pattern seq = prSet.pattern;
 			
 			/***************************************************************************/
 			if (seq.length() < 2) continue;
 			/***************************************************************************/
 
-//			Debug._PrintL("\n" + seq + "("+trnSet.size()+")" + "(" + trnSet.weight() + ")");
-			// construct the R-tree on POIs in trnSet
-			RTree rt = new RTree();
-			HashSet<Place> places = trnSet.computePOIs();
+			// 2.1. construct the R-tree on POIs in trnSet
+			RTree rtree = new RTree();
+			HashSet<Place> places = prSet.computePOIs();
 			for (Place p: places) {
 				p.clearPostings(); // for each trnSet, clear postings..
-				rt.insert(p);
+				rtree.insert(p);
 			}
 //			Debug._PrintL("Nodes : "+rt.nodes+" heights: "+rt.height+"\n");
 			
-			// construct the inverted list of posting transitions
-			for (Transition trn: trnSet) {
-				trn.addPostings();
+			// 2.2. construct the inverted list of posting transitions
+			for (PRoute route: prSet) {
+				route.addPostings();
 			}
 
-			ArrayList<Tset> clusters = pDBSCAN(trnSet, rt);
+			// 2.3. perform pDBSCAN()
+			ArrayList<PRouteSet> clusters = pDBSCAN(prSet, rtree);
 			
 			if (clusters.size() > 0) {
-				Debug._PrintL(seq + "\t" + trnSet.size() + "\t" + trnSet.weight() + "\t" + clusters.size());
-				for (Tset cluster: clusters) {
+				Debug._PrintL(seq + "\t" + prSet.size() + "\t" + prSet.weight() + "\t" + clusters.size());
+				for (PRouteSet cluster: clusters) {
 					PRegion pRegion = new PRegion(cluster);
-					results.add(pRegion);
+					pRegions.add(pRegion);
 				}
 			}
 			else {
@@ -64,33 +98,31 @@ public class RegMiner extends Miner {
 			}
 		}
 
-		Debug._PrintL("");Debug._PrintL("");
-		Debug._PrintL("--------------End of SkeletonRegMine----------");
-		Debug._PrintL("");Debug._PrintL("");
-		return results;
+		Debug._PrintL("--------------End of RegMiner----------");
+		return pRegions;
 	}
 
 
-	public void compactGrow(ArrayList<Tset> output) {
+	public void compactGrow(ArrayList<PRouteSet> output) {
 		Debug._PrintL("----Start compactGrow----");
 		HashSet<String> freqCateSet = freqCategories();
 
 		for (String cate: freqCateSet)
 		{
 			Pattern seq = new Pattern(cate);
-			Tset tSet = new Tset(seq);
+			PRouteSet prSet = new PRouteSet(seq);
 			for (Trajectory traj: this.trajs) {
 				int idx = traj.pattern.indexOf(cate, 0);
 				while (idx >= 0) {
-					Transition trn = new Transition(traj, seq, idx, idx);
-					tSet.add(trn);
+					PRoute route = new PRoute(traj, seq, idx, idx);
+					prSet.add(route);
 					idx = traj.pattern.indexOf(cate, idx+1);
 				}
 			}
-			Collections.sort(tSet.trns); // sort only for length-1 patterns
+			Collections.sort(prSet.routes); // sort only for length-1 patterns
 
-			output.add(tSet); // output length-1 patterns
-			prefixSpan(output, freqCateSet, seq, tSet);
+			output.add(prSet); // output length-1 patterns
+			prefixSpan(output, freqCateSet, seq, prSet);
 		}
 
 		Debug._PrintL("# global freq patterns: " + output.size());
@@ -98,17 +130,17 @@ public class RegMiner extends Miner {
 		
 		/***************************************************************************/
 //		Collections.sort(output);
-		for (Tset tSet: output) {
-			if (tSet.pattern.length() > 1)	Debug._PrintL(tSet.pattern.toString() + "\t" + tSet.size());
-		}
+//		for (PRouteSet prSet: output) {
+//			if (prSet.pattern.length() > 1)	Debug._PrintL(prSet.pattern.toString() + "\t" + prSet.size());
+//		}
 		/***************************************************************************/
 		
 		
-		Debug._PrintL("----End compactGrow----\n");
+		Debug._PrintL("----End compactGrow----");
 	}
 
 	// grow seq and tSet
-	private void prefixSpan(ArrayList<Tset> output, HashSet<String> freqCateSet, Pattern seq, Tset tSet) {
+	private void prefixSpan(ArrayList<PRouteSet> output, HashSet<String> freqCateSet, Pattern seq, PRouteSet prSet) {
 	
 		for (String cate: freqCateSet)
 		{
@@ -116,11 +148,11 @@ public class RegMiner extends Miner {
 //			if (cate.equals(tSet.pattern.seq.get(tSet.pattern.seq.size()-1))) continue;
 			/***************************************************************************/
 
-			Tset tSetP = transitionGrow(tSet, seq, cate);
+			PRouteSet prSetPlus = routeGrow(prSet, seq, cate);
 
-			if (tSetP.weight() >= this.sg) {
-				output.add(tSetP);
-				prefixSpan(output, freqCateSet, tSetP.pattern, tSetP);
+			if (prSetPlus.weight() >= this.sg) {
+				output.add(prSetPlus);
+				prefixSpan(output, freqCateSet, prSetPlus.pattern, prSetPlus);
 			}
 		}
 	}
@@ -148,71 +180,71 @@ public class RegMiner extends Miner {
 		return freqCateSet;
 	}
 
-	private Tset transitionGrow(Tset tSet, Pattern seq, String cate)
+	private PRouteSet routeGrow(PRouteSet prSet, Pattern seq, String cate)
 	{
 		Pattern seqP = seq.grow(cate);
-		Tset tSetP = new Tset(seqP);
+		PRouteSet prSetPlus = new PRouteSet(seqP);
 
-		Transition trnPrev = null;
+		PRoute rtPrev = null;
 		int eNew = 0;
-		for (Transition trn: tSet) {
-			if (trnPrev != null && trn.traj.equals(trnPrev.traj)) { // for each transition in the same trajectory
-				eNew = trn.nextPos(cate);
-				if (eNew > trn.e) { // if such a eNew exists
+		for (PRoute rt: prSet) {
+			if (rtPrev != null && rt.traj.equals(rtPrev.traj)) { // for each transition in the same trajectory
+				eNew = rt.nextPos(cate);
+				if (eNew > rt.e) { // if such a eNew exists
 					
-					if (trnPrev.s <= trn.s && trnPrev.e >= eNew) { // if previous transition contains new transition
-						tSetP.decWeight(trnPrev.weight());
-						trnPrev.setInterval(trn.s, eNew);
-						tSetP.incWeight(trnPrev.weight());
+					if (rtPrev.s <= rt.s && rtPrev.e >= eNew) { // if previous transition contains new transition
+						prSetPlus.decWeight(rtPrev.weight());
+						rtPrev.setInterval(rt.s, eNew);
+						prSetPlus.incWeight(rtPrev.weight());
 					}
 					else {
-						Transition trnNew = new Transition(trn.traj, seqP, trn.s, eNew);
-						tSetP.add(trnNew);
-						trnPrev = trnNew;
+						PRoute trnNew = new PRoute(rt.traj, seqP, rt.s, eNew);
+						prSetPlus.add(trnNew);
+						rtPrev = trnNew;
 					}
 				}
 			}
 			else { // the first trn for each trajectory
-				eNew = trn.nextPos(cate);
-				if (eNew > trn.e) {
-					Transition trnNew = new Transition(trn.traj, seqP, trn.s, eNew);
-					tSetP.add(trnNew);
-					trnPrev = trnNew;
+				eNew = rt.nextPos(cate);
+				if (eNew > rt.e) {
+					PRoute rtNew = new PRoute(rt.traj, seqP, rt.s, eNew);
+					prSetPlus.add(rtNew);
+					rtPrev = rtNew;
 				}
 			}
 		}
 
-		return tSetP;
+		return prSetPlus;
 	}
 
-	public ArrayList<Tset> pDBSCAN(Tset trnSet, RTree rt) {
-		ArrayList<Tset> clusters = new ArrayList<Tset>();
-		HashSet<Transition> processed = new HashSet<Transition>();
-		ArrayList<Transition> processing = new ArrayList<Transition>();
+	public ArrayList<PRouteSet> pDBSCAN(PRouteSet prSet, RTree rtree) {
+		ArrayList<PRouteSet> clusters = new ArrayList<PRouteSet>();
+		HashSet<PRoute> processed = new HashSet<PRoute>();
+		ArrayList<PRoute> processing = new ArrayList<PRoute>();
 
-		for (Transition trn: trnSet) {
-			if (processed.contains(trn)) continue;
+		for (PRoute route: prSet) {
+			if (processed.contains(route)) continue;
 
-			processed.add(trn);
+			processed.add(route);
 //			NeighborTset neighborTrns = getNeighbors(trn, trnSet);
-			NeighborTset neighborTrns = getNeighbors(trn, rt);
-			trn.setDensity(neighborTrns.sumRatios());
-			trn.setNeighbors(neighborTrns);
+			NeighborPRouteSet neighborTrns = getNeighbors(route, rtree);
+			route.setDensity(neighborTrns.sumRatios());
+			route.setNeighbors(neighborTrns);
 
 			
-			if (trn.density() >= this.sg) {
-				Tset cluster = new Tset(trnSet.pattern);
+			if (route.density() >= this.sg) {
+				PRouteSet cluster = new PRouteSet(prSet.pattern);
 				clusters.add(cluster);
-				cluster.add(trn);
+				cluster.add(route);
 				processing.clear();
 				processing.addAll(neighborTrns.set);
 
 				for (int i=0; i < processing.size(); i++) {
-					Transition neighbor = processing.get(i);
+					PRoute neighbor = processing.get(i);
 					if (!processed.contains(neighbor)) {
 						processed.add(neighbor);
 //						NeighborTset newNeighborTrns = getNeighbors(neighbor, trnSet);
-						NeighborTset newNeighborTrns = getNeighbors(neighbor, rt);
+						NeighborPRouteSet newNeighborTrns = getNeighbors(neighbor, rtree);
 						neighbor.setDensity(newNeighborTrns.sumRatios());
 						neighbor.setNeighbors(newNeighborTrns);
 						if (neighbor.density() >= this.sg) {
@@ -227,12 +259,12 @@ public class RegMiner extends Miner {
 		return clusters;
 	}
 	
-	public NeighborTset getNeighbors(Transition trn, RTree rt) {
-		NeighborTset neighbors = new NeighborTset(trn.pattern);
+	public NeighborPRouteSet getNeighbors(PRoute trn, RTree rtree) {
+		NeighborPRouteSet neighbors = new NeighborPRouteSet(trn.pattern);
 		
-		HashMap<Transition, Integer> neighborFreqs = rt.neighborhoodSearch(trn, this.ep);
+		HashMap<PRoute, Integer> neighborFreqs = rtree.neighborhoodSearch(trn, this.ep);
 		
-		for (Transition neighbor: neighborFreqs.keySet()) {
+		for (PRoute neighbor: neighborFreqs.keySet()) {
 			double ratio = (double) neighborFreqs.get(neighbor) / (double) neighbor.length();
 			neighbors.add(neighbor, ratio);
 		}
@@ -240,10 +272,10 @@ public class RegMiner extends Miner {
 		return neighbors;
 	}
 
-	public NeighborTset getNeighbors(Transition trn, Tset trnSet) {
-		NeighborTset neighbors = new NeighborTset(trnSet.pattern);
-		for (Transition other: trnSet) {
-			double ratio = trn.computeRatio(other, this.ep);
+	public NeighborPRouteSet getNeighbors(PRoute rt, PRouteSet prSet) {
+		NeighborPRouteSet neighbors = new NeighborPRouteSet(prSet.pattern);
+		for (PRoute other: prSet) {
+			double ratio = rt.computeRatio(other, this.ep);
 			if (ratio > 0) {
 				neighbors.add(other, ratio);
 			}

@@ -8,21 +8,21 @@ import java.util.ArrayList;
  * @date 3 Jan 2017
  *
  */
-public class NeighborTset extends Tset {
+public class NeighborPRouteSet extends PRouteSet {
 
 //	public ArrayList<Double> ratios;
 	private double sumRatios;
 	
-	public NeighborTset(Pattern pattern) {
+	public NeighborPRouteSet(Pattern pattern) {
 		super(pattern);
 //		ratios = new ArrayList<Double>();
 		sumRatios = 0.0;
 	}
 
-	public void add(Transition trn, double ratio) {
-		super.add(trn);
+	public void add(PRoute rt, double ratio) {
+		super.add(rt);
 //		ratios.add(ratio);
-		sumRatios += ratio*trn.weight();
+		sumRatios += ratio*rt.weight();
 	}
 	
 //	public void mergeWith(NeighborTset nTset) {
@@ -42,8 +42,8 @@ public class NeighborTset extends Tset {
 	
 	public String strTrns() {
 		String str = "";
-		for (int i=0; i < super.trns.size(); i++) {
-			Transition trn = super.trns.get(i);
+		for (int i=0; i < super.routes.size(); i++) {
+			PRoute rt = super.routes.get(i);
 //			double ratio = this.ratios.get(i);
 //			str += "\n" + trn.toString() +" ratio:" + ratio;
 		}

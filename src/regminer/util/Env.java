@@ -1,8 +1,6 @@
 package regminer.util;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 
 import regminer.struct.Edge;
 import regminer.struct.Place;
@@ -27,7 +25,7 @@ public class Env {
 	
 	public static double NeighborSize = 1; // kilometers
 	
-	public final static long MaxDays = 1;
+	private final static long MaxDays = 1; // 1 day
 	public final static long MaxTimeGap = 60*24*MaxDays; // in minutes
 	
 }

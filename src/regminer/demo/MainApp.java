@@ -37,13 +37,13 @@ import regminer.Main;
 import regminer.algorithm.Miner;
 import regminer.algorithm.RegMiner;
 import regminer.algorithm.RegMiner;
-import regminer.struct.NeighborTset;
+import regminer.struct.NeighborPRouteSet;
 import regminer.struct.PRegion;
 import regminer.struct.Pattern;
 import regminer.struct.Place;
 import regminer.struct.Trajectory;
-import regminer.struct.Transition;
-import regminer.struct.Tset;
+import regminer.struct.PRoute;
+import regminer.struct.PRouteSet;
 import regminer.struct.Visit;
 import regminer.util.Debug;
 import regminer.util.Env;
@@ -75,13 +75,13 @@ public class MainApp extends Application implements MapComponentInitializedListe
 	@Override
 	public void mapInitialized() {
 		
-		final String dataName = "NY";
+		final String dataName = "US";
 		
 		
 		ArrayList<Place> P;
 		ArrayList<Trajectory> T;
 		Set<String> C;
-		Env.NeighborSize = 10; // kilometers
+		Env.NeighborSize = 1; // kilometers
 		Debug._PrintL(dataName + "\tmax memory size: " + java.lang.Runtime.getRuntime().maxMemory()/(double)1024/(double)1024/(double)1024 + "GBs");
 
 		P = Main.loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/"+dataName+"/places.txt");
@@ -90,17 +90,11 @@ public class MainApp extends Application implements MapComponentInitializedListe
 		
 //		Env.NeighborSize = Env.ep / Env.ScaleFactor;		
 		Env.ep = Env.NeighborSize * Env.ScaleFactor;
-		Debug._PrintL("sup: " + Env.sg +"  ep(Kmeters):" + Env.NeighborSize + " ep: " + Env.ep + "  time gap: " + Env.MaxTimeGap + "  BlockSize: " + Env.B);
+		Debug._PrintL("sup: " + Env.sg +"  ep(Kms):" + Env.NeighborSize + " ep: " + Env.ep + "  time gap: " + Env.MaxTimeGap + "  BlockSize: " + Env.B);
 		
 		long cpuTimeElapsed;
 		double [] t = new double[1];
-		
-	
-		Miner regminer = new RegMiner(P, T, C, Env.ep, Env.sg);
-		cpuTimeElapsed = Util.getCpuTime();
-		ArrayList<PRegion> results = regminer.mine();
-		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[0] = cpuTimeElapsed/(double)1000000000;
-		
+
 		double avgLat = P.stream().mapToDouble(val -> val.lat).average().getAsDouble();
 		double avgLon = P.stream().mapToDouble(val -> val.lon).average().getAsDouble();
 		
@@ -119,13 +113,19 @@ public class MainApp extends Application implements MapComponentInitializedListe
 
 		map = mapView.createMap(mapOptions);
 		
+		printTrajectories(T);
+		Miner regminer = new RegMiner(P, T, C, Env.ep, Env.sg, Env.MaxTimeGap);
+		cpuTimeElapsed = Util.getCpuTime();
+		ArrayList<PRegion> results = regminer.mine();
+		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[0] = cpuTimeElapsed/(double)1000000000;
+		
 		HeatmapLayerOptions heatMapOptions = new HeatmapLayerOptions();
 		ArrayList<WeightedLocation> heatMapData = new ArrayList<WeightedLocation>();
 	
 		for (PRegion pRegion: results) {
 //			Pattern visiblePattern = new Pattern(new String[] {"Coffee Shop", "Home"});
 //			Pattern visiblePattern = new Pattern(new String[] {"Grocery Store", "Home (private)"});
-			Pattern visiblePattern1 = new Pattern(new String[] {"Hotel", "Coffee Shop"});
+			Pattern visiblePattern1 = new Pattern(new String[] {"Office", "Coffee Shop"});
 //			Pattern visiblePattern2 = new Pattern(new String[] {"Office", "Bar"});	
 			if (pRegion.S.equals(visiblePattern1) || pRegion.S.startWith(visiblePattern1)) {
 //			if (pRegion.S.length() > 1) {
@@ -147,9 +147,8 @@ public class MainApp extends Application implements MapComponentInitializedListe
 		
 		
 		map.zoomProperty().addListener((ObservableValue<? extends Number> obs, Number o, Number n) -> {
-            heatMap.setOptions(heatMapOptions.radius(metersToEquatorPixels(Env.ep / Env.ScaleFactor * 100, map)));
+            heatMap.setOptions(heatMapOptions.radius(metersToEquatorPixels(Env.ep / Env.ScaleFactor * 500, map)));
         });
-				
 	}
 	
 
@@ -161,11 +160,11 @@ public class MainApp extends Application implements MapComponentInitializedListe
 
 
 	
-	public void printTrns(Tset trns, ArrayList<WeightedLocation> heatMapData) {
+	public void printTrns(PRouteSet trns, ArrayList<WeightedLocation> heatMapData) {
 		Random rand = new Random();
 		int k = 0;
 		
-		for (Transition trn: trns)
+		for (PRoute trn: trns)
 		{
 			k++;
 			Debug._Print(trn.toString()+ "(");
@@ -221,8 +220,8 @@ public class MainApp extends Application implements MapComponentInitializedListe
 	}
 
 
-	private void printNeighbors(Place origin, NeighborTset neighbors, String colorStr) {
-		for (Transition neighbor: neighbors) {
+	private void printNeighbors(Place origin, NeighborPRouteSet neighbors, String colorStr) {
+		for (PRoute neighbor: neighbors) {
 			ArrayList<LatLong> path = new ArrayList<LatLong>();
 			PolylineOptions lineOptions = new PolylineOptions();
 			for (Visit visit: neighbor.visits) {
@@ -267,7 +266,7 @@ public class MainApp extends Application implements MapComponentInitializedListe
 		{
 
 //			if (k++ % 100 != 0) continue;
-			k++;						
+			k++;
 			System.out.print("T_"+k+ "(");
 
 			ArrayList<LatLong> path = new ArrayList<LatLong>();
@@ -305,7 +304,7 @@ public class MainApp extends Application implements MapComponentInitializedListe
 	}
 
 
-	public void setMarkerIcon(Transition trn, Place venue, MarkerOptions markerOptions) {
+	public void setMarkerIcon(PRoute trn, Place venue, MarkerOptions markerOptions) {
 //		if (venue.category.contains("Coffee")) {
 //			markerOptions.position( new LatLong(venue.lat, venue.lon) )
 //			.icon("icon/coffee.png")

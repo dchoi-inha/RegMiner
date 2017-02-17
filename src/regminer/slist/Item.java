@@ -1,7 +1,7 @@
 package regminer.slist;
 
 
-import regminer.struct.Transition;
+import regminer.struct.PRoute;
 
 /**
  * @author Dong-Wan Choi at Imperial College London
@@ -12,7 +12,7 @@ import regminer.struct.Transition;
 public class Item implements Comparable<Item> {
 
 	public double coord;
-	public Transition trn;
+	public PRoute trn;
 	public int sgn; // 1 or -1
 	
 	public Item next;
@@ -61,7 +61,7 @@ public class Item implements Comparable<Item> {
 
 
 
-	public Item (double coord, Transition trn, int sgn) {
+	public Item (double coord, PRoute trn, int sgn) {
 		this.coord = coord;
 		this.trn = trn;
 		this.sgn = sgn;

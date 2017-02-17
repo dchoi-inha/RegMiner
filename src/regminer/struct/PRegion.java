@@ -12,9 +12,9 @@ import java.util.HashSet;
 public class PRegion {
 	public HashSet<Place> P;
 	public Pattern S;
-	public Tset trns;
+	public PRouteSet trns;
 	
-	public PRegion(Tset trns) {
+	public PRegion(PRouteSet trns) {
 		P = trns.computePOIs();
 		S = trns.pattern;
 		this.trns = trns;
@@ -28,7 +28,7 @@ public class PRegion {
 	public String trnsStr() {
 		String str = "";
 		
-		for (Transition trn: trns) {
+		for (PRoute trn: trns) {
 			str += trn.toString() + "(density=" + trn.density() + ")\n";
 		}
 		

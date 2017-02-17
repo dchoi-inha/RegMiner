@@ -15,46 +15,46 @@ import regminer.slist.SLlist;
  * @date 21 Dec 2016
  *
  */
-public class Tset implements Iterable<Transition>, Comparable<Tset>{
+public class PRouteSet implements Iterable<PRoute>, Comparable<PRouteSet>{
 	public Pattern pattern;
-	public ArrayList<Transition> trns;
+	public ArrayList<PRoute> routes;
 	
 	private double weight;
 	
 	public SLlist listX;
 	public SLlist listY;
 	
-	public HashSet<Transition> set;
+	public HashSet<PRoute> set;
 	
 	
-	public Tset(Pattern pattern)
+	public PRouteSet(Pattern pattern)
 	{
 		this.pattern = pattern;
-		this.trns = new ArrayList<Transition>();
+		this.routes = new ArrayList<PRoute>();
 		this.weight = 0;
 		
 		this.listX = new SLlist();
 		this.listY = new SLlist();
 		
-		this.set = new HashSet<Transition>();
+		this.set = new HashSet<PRoute>();
 	}
 	
-	public void add(Transition trn) {
-		trns.add(trn);
+	public void add(PRoute trn) {
+		routes.add(trn);
 		weight += trn.weight();
 		
 		set.add(trn);
 	}
 	
 	
-	public Transition get(int i) {
-		return trns.get(i);
+	public PRoute get(int i) {
+		return routes.get(i);
 	}
 	
 	public HashSet<Place> computePOIs() {
 		HashSet<Place> places = new HashSet<Place>();
-		for (Transition trn: trns) {
-			places.addAll(trn.computePOIs());
+		for (PRoute rt: routes) {
+			places.addAll(rt.computePOIs());
 		}
 		return places;
 	}
@@ -64,12 +64,12 @@ public class Tset implements Iterable<Transition>, Comparable<Tset>{
 //		weight += tSet.weight();
 //	}
 	
-	public boolean contains(Transition trn) {
+	public boolean contains(PRoute trn) {
 		return set.contains(trn);
 	}
 	
 	public int size(){
-		return trns.size();
+		return routes.size();
 	}
 	
 	public double weight() {
@@ -77,7 +77,7 @@ public class Tset implements Iterable<Transition>, Comparable<Tset>{
 	}
 
 	public String toString() {
-		return pattern.toString() + " : " + trns.toString();
+		return pattern.toString() + " : " + routes.toString();
 	}
 	public String embrStr() {
 		return "("+String.format("%1$.3f", this.listX.head.coord)+","+
@@ -87,12 +87,12 @@ public class Tset implements Iterable<Transition>, Comparable<Tset>{
 	}
 
 	@Override
-	public Iterator<Transition> iterator() {
-		return trns.iterator();
+	public Iterator<PRoute> iterator() {
+		return routes.iterator();
 	}
 
 	public void clear() {
-		this.trns.clear();
+		this.routes.clear();
 		this.weight = 0;
 		this.set.clear();
 		
@@ -107,7 +107,7 @@ public class Tset implements Iterable<Transition>, Comparable<Tset>{
 	}
 
 	@Override
-	public int compareTo(Tset o) {
+	public int compareTo(PRouteSet o) {
 		return o.size() - this.size(); // descending order
 	}
 	

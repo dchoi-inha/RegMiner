@@ -14,14 +14,14 @@ import regminer.util.Util;
  * @date 21 Dec 2016
  *
  */
-public class Transition implements Iterable<Visit>, Comparable<Transition>{
+public class PRoute implements Iterable<Visit>, Comparable<PRoute>{
 	public Trajectory traj;
 	public List<Visit> visits;
 	public Pattern pattern;
 	public int s, e; // [s:e]
 	
 	private double density;
-	private NeighborTset neighbors;
+	private NeighborPRouteSet neighbors;
 	
 	private MBR mbr;
 	private MBR embr;
@@ -29,7 +29,7 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 	private double distSum;
 	
 
-	public Transition(Trajectory traj, Pattern pattern, int s, int e)
+	public PRoute(Trajectory traj, Pattern pattern, int s, int e)
 	{
 		this.traj = traj;
 		this.visits = traj.visits.subList(s, e+1);
@@ -140,11 +140,11 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 		this.density = density*penalty;
 	}
 	
-	public void setNeighbors(NeighborTset neighborTrns) {
+	public void setNeighbors(NeighborPRouteSet neighborTrns) {
 		this.neighbors = neighborTrns;
 	}
 	
-	public NeighborTset neighbors() {
+	public NeighborPRouteSet neighbors() {
 		return this.neighbors;
 	}
 	
@@ -194,10 +194,10 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 		if (obj == null) {
 			return false;
 		}
-		if (!(obj instanceof Transition)) {
+		if (!(obj instanceof PRoute)) {
 			return false;
 		}
-		Transition other = (Transition) obj;
+		PRoute other = (PRoute) obj;
 		if (e != other.e) {
 			return false;
 		}
@@ -216,7 +216,7 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 
 
 	@Override
-	public int compareTo(Transition o) {
+	public int compareTo(PRoute o) {
 		
 		if (this.traj.equals(o.traj))
 			return this.s - o.s;
@@ -229,7 +229,7 @@ public class Transition implements Iterable<Visit>, Comparable<Transition>{
 		
 	}
 	
-	public double computeRatio(Transition other, double ep) {
+	public double computeRatio(PRoute other, double ep) {
 		int cnt = 0;
 		for (Visit v: other) {
 			if (this.distance(v.place) <= ep) {

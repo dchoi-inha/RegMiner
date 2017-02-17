@@ -20,18 +20,19 @@ public abstract class Miner {
 	ArrayList<Place> places;
 	ArrayList<Trajectory> trajs;
 	Set<String> cateSet;
-	double ep, sg;
+	double ep, sg, dt;
 	
 	
 	
 	public Miner(ArrayList<Place> places, ArrayList<Trajectory> trajs,
-			Set<String> cateSet, double ep, double sg) {
+			Set<String> cateSet, double ep, double sg, double dt) {
 		super();
 		this.places = places;
 		this.trajs = trajs;
 		this.cateSet = cateSet;
 		this.ep = ep;
 		this.sg = sg;
+		this.dt = dt;
 	}
 	
 	abstract public ArrayList<PRegion> mine();
