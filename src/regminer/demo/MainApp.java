@@ -75,13 +75,15 @@ public class MainApp extends Application implements MapComponentInitializedListe
 	@Override
 	public void mapInitialized() {
 		
-		final String dataName = "US";
+		final String dataName = "UK";
 		
 		
 		ArrayList<Place> P;
 		ArrayList<Trajectory> T;
 		Set<String> C;
-		Env.NeighborSize = 1; // kilometers
+		Env.NeighborSize = 5; // kilometers
+		Env.MaxTimeGap = 60*24;
+		Env.sg = 30;
 		Debug._PrintL(dataName + "\tmax memory size: " + java.lang.Runtime.getRuntime().maxMemory()/(double)1024/(double)1024/(double)1024 + "GBs");
 
 		P = Main.loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/"+dataName+"/places.txt");
@@ -109,12 +111,34 @@ public class MainApp extends Application implements MapComponentInitializedListe
 		.scaleControl(true)
 		.streetViewControl(true)
 		.zoomControl(false)
-		.zoom(10);
+		.zoom(12);
 
 		map = mapView.createMap(mapOptions);
 		
-		printTrajectories(T);
-		Miner regminer = new RegMiner(P, T, C, Env.ep, Env.sg, Env.MaxTimeGap);
+//		printTrajectories(T);
+		
+//		Pattern visiblePattern1 = new Pattern(new String[] {"Hotel", "Coffee Shop"});
+//		Pattern visiblePattern2 = new Pattern(new String[] {"Hotel", "Coffee Shop"});
+		
+		Pattern visiblePattern1 = new Pattern(new String[] {"Office", "Coffee Shop"});
+		Pattern visiblePattern2 = new Pattern(new String[] {"Office", "Coffee Shop"});
+		
+//		Pattern visiblePattern1 = new Pattern(new String[] {"Office", "Pub"});
+//		Pattern visiblePattern2 = new Pattern(new String[] {"Office", "Bar"});
+		
+//		Pattern visiblePattern1 = new Pattern(new String[] {"Plaza", "Monument / Landmark"});
+//		Pattern visiblePattern2 = new Pattern(new String[] {"Plaza", "Monument / Landmark"});
+
+		RegMiner regminer = new RegMiner(P, T, C, Env.ep, Env.sg, Env.MaxTimeGap);
+		
+//		ArrayList<PRouteSet> freqPRSets = regminer.getFreqTrnSets();
+//		for (PRouteSet prSet: freqPRSets) {
+//			if (prSet.pattern.equals(visiblePattern1) || prSet.pattern.equals(visiblePattern2)) {
+//				printTrnLines(prSet);
+//			}
+//		}
+		
+		
 		cpuTimeElapsed = Util.getCpuTime();
 		ArrayList<PRegion> results = regminer.mine();
 		cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; t[0] = cpuTimeElapsed/(double)1000000000;
@@ -122,15 +146,12 @@ public class MainApp extends Application implements MapComponentInitializedListe
 		HeatmapLayerOptions heatMapOptions = new HeatmapLayerOptions();
 		ArrayList<WeightedLocation> heatMapData = new ArrayList<WeightedLocation>();
 	
+		int [] lengthCnts = new int[10];
 		for (PRegion pRegion: results) {
-//			Pattern visiblePattern = new Pattern(new String[] {"Coffee Shop", "Home"});
-//			Pattern visiblePattern = new Pattern(new String[] {"Grocery Store", "Home (private)"});
-			Pattern visiblePattern1 = new Pattern(new String[] {"Office", "Coffee Shop"});
-//			Pattern visiblePattern2 = new Pattern(new String[] {"Office", "Bar"});	
-			if (pRegion.S.equals(visiblePattern1) || pRegion.S.startWith(visiblePattern1)) {
-//			if (pRegion.S.length() > 1) {
+			lengthCnts[pRegion.S.length()-2]++;
+			if (pRegion.S.equals(visiblePattern1) || pRegion.S.equals(visiblePattern2)) {
 				Debug._PrintL(pRegion.toString());
-				printTrns(pRegion.trns, heatMapData);
+				printPRegionTrns(pRegion.trns, heatMapData);
 				Debug._Print("\n");
 				
 				avgLat = pRegion.P.stream().mapToDouble(val -> val.lat).average().getAsDouble();
@@ -138,16 +159,19 @@ public class MainApp extends Application implements MapComponentInitializedListe
 			}
 		}
 		
-		map.setCenter(new LatLong(avgLat, avgLon));
+		map.setCenter(new LatLong(51.528308,-0.3817765));
 		
-		heatMapOptions.radius(metersToEquatorPixels(Env.ep / Env.ScaleFactor * 100, map)).opacity(0.8).data(new MVCArray(heatMapData.toArray()));
+		heatMapOptions.radius(metersToEquatorPixels(Env.ep / Env.ScaleFactor * 200, map)).opacity(0.8).data(new MVCArray(heatMapData.toArray()));
 		HeatmapLayer heatMap = new HeatmapLayer(heatMapOptions);
 		heatMap.setMap(map);
+		
+		for (int i = 0; i < lengthCnts.length; i++)
+			Debug._PrintL("# length-"+(i+2)+" patterns: " + lengthCnts[i]);		
 		Debug._PrintL("Elapsed time: " + t[0]);
 		
 		
 		map.zoomProperty().addListener((ObservableValue<? extends Number> obs, Number o, Number n) -> {
-            heatMap.setOptions(heatMapOptions.radius(metersToEquatorPixels(Env.ep / Env.ScaleFactor * 500, map)));
+            heatMap.setOptions(heatMapOptions.radius(metersToEquatorPixels(Env.ep / Env.ScaleFactor * 200, map)));
         });
 	}
 	
@@ -160,21 +184,25 @@ public class MainApp extends Application implements MapComponentInitializedListe
 
 
 	
-	public void printTrns(PRouteSet trns, ArrayList<WeightedLocation> heatMapData) {
+	public void printPRegionTrns(PRouteSet trns, ArrayList<WeightedLocation> heatMapData) {
 		Random rand = new Random();
 		int k = 0;
 		
 		for (PRoute trn: trns)
 		{
+			
+//			Color color = Color.rgb(rand.nextInt(256), rand.nextInt(256), rand.nextInt(256));
+			Color color = Color.GREY;
+			String colorStr = String.format( "#%02X%02X%02X",
+		            (int)( color.getRed() * 255 ),
+		            (int)( color.getGreen() * 255 ),
+		            (int)( color.getBlue() * 255 ) );
 			k++;
 			Debug._Print(trn.toString()+ "(");
 
 			ArrayList<LatLong> path = new ArrayList<LatLong>();
 			PolylineOptions lineOptions = new PolylineOptions();
 			
-			String colorStr = Color.rgb(rand.nextInt(256), rand.nextInt(256), rand.nextInt(256)).toString();
-			colorStr = colorStr.replace("0x", "#");
-			colorStr = colorStr.replace("ff", "");
 
 			for (int i = 0; i < trn.visits.size(); i++) 
 			{
@@ -188,23 +216,6 @@ public class MainApp extends Application implements MapComponentInitializedListe
 					setMarkerIcon(trn, p, markerOptions); 
 					Marker marker = new Marker(markerOptions);
 //					map.addMarker(marker);
-
-					if (k < 2) {
-						CircleOptions circleOptions = new CircleOptions();
-						String colorStr2 = Color.rgb(255, 255, 255).toString();
-						colorStr2 = colorStr2.replace("0x", "#");
-						colorStr2 = colorStr2.replace("ff", "");
-						circleOptions.center(new LatLong(p.lat, p.lon))
-						.radius(Env.ep / Env.ScaleFactor * 1000)
-						.fillColor(colorStr2)
-						.fillOpacity(0)
-						.strokeColor(colorStr)
-						.strokeWeight(1.0);
-						Circle circle = new Circle(circleOptions);
-//						map.addMapShape(circle);
-//						printNeighbors(trn.visits.get(i).place, trn.neighbors(), colorStr);
-					}
-					
 				}
 			}
 			Debug._PrintL(")");
@@ -212,9 +223,51 @@ public class MainApp extends Application implements MapComponentInitializedListe
 			lineOptions.path(new MVCArray(path.toArray()))
 			.geodesic(true)
 			.strokeWeight(1.0)
+			.strokeOpacity(0.6)
 			.strokeColor(colorStr);			
 			Polyline line = new Polyline(lineOptions);
-//			map.addMapShape(line);
+			map.addMapShape(line);
+		}
+		
+	}
+	
+	public void printTrnLines(PRouteSet trns) {
+		Random rand = new Random();
+		int k = 0;
+//		String colorStr = Color.rgb(rand.nextInt(256), rand.nextInt(256), rand.nextInt(256)).toString();
+		String colorStr = Color.RED.toString();
+//		System.out.println(colorStr);
+		colorStr = colorStr.replace("0x", "#");
+		colorStr = colorStr.replace("ff", "");
+//		System.out.println(colorStr);
+		for (PRoute trn: trns)
+		{
+			k++;
+
+			ArrayList<LatLong> path = new ArrayList<LatLong>();
+			PolylineOptions lineOptions = new PolylineOptions();
+			
+
+			for (int i = 0; i < trn.visits.size(); i++) 
+			{
+				Visit visit = trn.visits.get(i);
+				Place p = visit.place;
+				if (p != null) {
+					path.add(new LatLong(p.lat, p.lon)); 
+					MarkerOptions markerOptions = new MarkerOptions();
+					setMarkerIcon(trn, p, markerOptions); 
+					Marker marker = new Marker(markerOptions);
+//					map.addMarker(marker);
+				}
+			}
+			
+			lineOptions.path(new MVCArray(path.toArray()))
+			.geodesic(true)
+			.strokeWeight(1.0)
+			.strokeOpacity(0.5)
+			.strokeColor(colorStr);			
+			Polyline line = new Polyline(lineOptions);
+			map.addMapShape(line);
 		}
 		
 	}

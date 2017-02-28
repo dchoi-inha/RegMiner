@@ -108,9 +108,12 @@ public class PRouteSet implements Iterable<PRoute>, Comparable<PRouteSet>{
 
 	@Override
 	public int compareTo(PRouteSet o) {
-		return o.size() - this.size(); // descending order
+		return Double.compare(this.weight(), o.weight());
 	}
 	
 	
 	
+	public double avgDensity() {
+		return routes.stream().mapToDouble(val -> val.density()).average().getAsDouble();
+	}
 }

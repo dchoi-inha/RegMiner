@@ -25,7 +25,6 @@ public class Env {
 	
 	public static double NeighborSize = 1; // kilometers
 	
-	private final static long MaxDays = 1; // 1 day
-	public final static long MaxTimeGap = 60*24*MaxDays; // in minutes
+	public static long MaxTimeGap = 60*24*1; // in minutes
 	
 }

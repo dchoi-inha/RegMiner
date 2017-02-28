@@ -32,7 +32,7 @@ public class Main {
 	
 	public static void main(String[] args) {
 		
-		final String dataName = "UK";	
+		final String dataName = "US";	
 
 		
 		Debug._PrintL(dataName + "\tmax memory size: " + java.lang.Runtime.getRuntime().maxMemory()/(double)1024/(double)1024/(double)1024 + "GBs");
@@ -41,7 +41,8 @@ public class Main {
 		Set<String> C=null;
 
 		double [] neighborSizeArray = new double [] {0.1, 0.5, 1, 5, 10}; // in kilometers
-		double [] sgArray = new double [] {200, 250};
+		double [] sgArray = new double [] {20, 30, 40, 50, 100, 150};
+		long [] timeGapArray = new long [] {60*6, 60*12, 60*24, 60*48};
 
 		for (int i=0; i < sgArray.length; i++) {
 			P = loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/"+dataName+"/places.txt");
@@ -49,8 +50,9 @@ public class Main {
 			C = loadCategories();
 
 			Env.sg = sgArray[i];
-			Env.NeighborSize = neighborSizeArray[2];
+			Env.NeighborSize = neighborSizeArray[3];
 			Env.ep = Env.NeighborSize * Env.ScaleFactor;
+			Env.MaxTimeGap = timeGapArray[2];
 			
 			Debug._PrintL("sup: " + Env.sg +"  ep(Kms):" + Env.NeighborSize +"  ep:" + Env.ep + "  time gap: " + Env.MaxTimeGap + "  BlockSize: " + Env.B);
 

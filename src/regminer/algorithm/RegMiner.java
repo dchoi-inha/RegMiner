@@ -44,6 +44,20 @@ public class RegMiner extends Miner {
 		
 		Debug._PrintL("# split trajectories: " + this.trajs.size());
 	}
+	
+	
+	// for visualize the global patterns without considering regional properties
+	public ArrayList<PRouteSet> getFreqTrnSets() { 
+		// 0. Split trajectories by time gap
+		splitTrajectoriesByTimeGap();
+		
+		
+		// 1. Find all frequent patterns along with their sets of transitions
+		ArrayList<PRouteSet> freqTrnSets = new ArrayList<PRouteSet>();
+		compactGrow(freqTrnSets);	
+		
+		return freqTrnSets;
+	}
 
 	@Override
 	public ArrayList<PRegion> mine() {
@@ -76,7 +90,6 @@ public class RegMiner extends Miner {
 				p.clearPostings(); // for each trnSet, clear postings..
 				rtree.insert(p);
 			}
-//			Debug._PrintL("Nodes : "+rt.nodes+" heights: "+rt.height+"\n");
 			
 			// 2.2. construct the inverted list of posting transitions
 			for (PRoute route: prSet) {
@@ -85,16 +98,22 @@ public class RegMiner extends Miner {
 
 			// 2.3. perform pDBSCAN()
 			ArrayList<PRouteSet> clusters = pDBSCAN(prSet, rtree);
+			Debug._PrintL(prSet.pattern.toString() + "\t" + prSet.size() + "\t" + prSet.weight() + "\t" + prSet.avgDensity());
 			
 			if (clusters.size() > 0) {
-				Debug._PrintL(seq + "\t" + prSet.size() + "\t" + prSet.weight() + "\t" + clusters.size());
+//				Debug._PrintL(seq + "\t" + prSet.size() + "\t" + prSet.weight() + "\t" + clusters.size());
+				Debug._PrintL("# pRegions: " + clusters.size());
 				for (PRouteSet cluster: clusters) {
 					PRegion pRegion = new PRegion(cluster);
 					pRegions.add(pRegion);
+//					Debug._PrintL(pRegion.toString());
+//					for (PRoute route: cluster) {
+//						Debug._PrintL(route.toString());
+//					}
 				}
 			}
 			else {
-				
+				Debug._PrintL("No Cluster!");
 			}
 		}
 
@@ -129,12 +148,13 @@ public class RegMiner extends Miner {
 		
 		
 		/***************************************************************************/
-//		Collections.sort(output);
+		Collections.sort(output, Collections.reverseOrder());
 //		for (PRouteSet prSet: output) {
-//			if (prSet.pattern.length() > 1)	Debug._PrintL(prSet.pattern.toString() + "\t" + prSet.size());
+//			if (prSet.pattern.length() > 1)	{
+//				Debug._PrintL(prSet.pattern.toString() + "\t" + prSet.size() + "\t" + prSet.weight());
+//			}
 //		}
 		/***************************************************************************/
-		
 		
 		Debug._PrintL("----End compactGrow----");
 	}
@@ -145,7 +165,7 @@ public class RegMiner extends Miner {
 		for (String cate: freqCateSet)
 		{
 			/***************************************************************************/
-//			if (cate.equals(tSet.pattern.seq.get(tSet.pattern.seq.size()-1))) continue;
+//			if (cate.equals(prSet.pattern.seq.get(prSet.pattern.seq.size()-1))) continue;
 			/***************************************************************************/
 
 			PRouteSet prSetPlus = routeGrow(prSet, seq, cate);

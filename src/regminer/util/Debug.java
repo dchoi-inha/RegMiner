@@ -15,13 +15,14 @@ import java.io.*;
 public class Debug {
 	
 	public static boolean flag = true;
+	public static boolean append = true;
 	public static String logFileName = Env.HomeDir + "/logs/regminer.log";
 	
 	public static void _PrintL(String str) {
 		if (flag) System.out.println(str);
 		else {
 			try {
-				PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(logFileName, true)));
+				PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(logFileName, append)));
 				out.println(str);
 				out.close();
 			} 
@@ -34,7 +35,7 @@ public class Debug {
 		if (flag) System.out.print(str);
 		else {
 			try {
-				PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(logFileName, true)));
+				PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(logFileName, append)));
 				out.print(str);
 				out.close();
 			} 
@@ -48,7 +49,7 @@ public class Debug {
 			if (flag) System.err.println("Error:" + str + " in "+object.getClass().getSimpleName());
 			else {
 				try {
-					PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(logFileName, true)));
+					PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(logFileName, append)));
 					out.print(str);
 					out.close();
 				} 
@@ -60,7 +61,7 @@ public class Debug {
 			if (flag) System.err.println("Error:" + str);
 			else {
 				try {
-					PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(logFileName, true)));
+					PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(logFileName, append)));
 					out.print(str);
 					out.close();
 				} 
