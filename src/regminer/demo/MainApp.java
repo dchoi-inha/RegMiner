@@ -118,16 +118,16 @@ public class MainApp extends Application implements MapComponentInitializedListe
 //		printTrajectories(T);
 		
 //		Pattern visiblePattern1 = new Pattern(new String[] {"Hotel", "Coffee Shop"});
-//		Pattern visiblePattern2 = new Pattern(new String[] {"Hotel", "Coffee Shop"});
+//		Pattern visiblePattern2 = new Pattern(new String[] {"NULL", "NULL"});
 		
-		Pattern visiblePattern1 = new Pattern(new String[] {"Office", "Coffee Shop"});
-		Pattern visiblePattern2 = new Pattern(new String[] {"Office", "Coffee Shop"});
-		
+		Pattern visiblePattern1 = new Pattern(new String[] {"Office", "Coffee Shop", "Office"});
+		Pattern visiblePattern2 = new Pattern(new String[] {"NULL"});
+//		
 //		Pattern visiblePattern1 = new Pattern(new String[] {"Office", "Pub"});
 //		Pattern visiblePattern2 = new Pattern(new String[] {"Office", "Bar"});
 		
 //		Pattern visiblePattern1 = new Pattern(new String[] {"Plaza", "Monument / Landmark"});
-//		Pattern visiblePattern2 = new Pattern(new String[] {"Plaza", "Monument / Landmark"});
+//		Pattern visiblePattern2 = new Pattern(new String[] {"NULL", "NULL"});
 
 		RegMiner regminer = new RegMiner(P, T, C, Env.ep, Env.sg, Env.MaxTimeGap);
 		
@@ -148,7 +148,7 @@ public class MainApp extends Application implements MapComponentInitializedListe
 	
 		int [] lengthCnts = new int[10];
 		for (PRegion pRegion: results) {
-			lengthCnts[pRegion.S.length()-2]++;
+//			lengthCnts[pRegion.S.length()-2]++;
 			if (pRegion.S.equals(visiblePattern1) || pRegion.S.equals(visiblePattern2)) {
 				Debug._PrintL(pRegion.toString());
 				printPRegionTrns(pRegion.trns, heatMapData);
@@ -159,9 +159,9 @@ public class MainApp extends Application implements MapComponentInitializedListe
 			}
 		}
 		
-		map.setCenter(new LatLong(51.528308,-0.3817765));
+		map.setCenter(new LatLong(51.507222, -0.1275));
 		
-		heatMapOptions.radius(metersToEquatorPixels(Env.ep / Env.ScaleFactor * 200, map)).opacity(0.8).data(new MVCArray(heatMapData.toArray()));
+		heatMapOptions.radius(metersToEquatorPixels(Env.ep / Env.ScaleFactor * 200, map)).opacity(0.8).dissipating(true).maxIntensity(300).data(new MVCArray(heatMapData.toArray()));
 		HeatmapLayer heatMap = new HeatmapLayer(heatMapOptions);
 		heatMap.setMap(map);
 		

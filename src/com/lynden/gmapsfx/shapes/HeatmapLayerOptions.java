@@ -28,6 +28,8 @@ public class HeatmapLayerOptions extends JavascriptObject {
     private MVCArray data;
     private double opacity = 0.2;
     private double radius;
+    private boolean dissipating;
+    private double maxIntensity;
     
     public HeatmapLayerOptions() {
     	super(GMapObjectType.OBJECT);
@@ -47,6 +49,18 @@ public class HeatmapLayerOptions extends JavascriptObject {
     public HeatmapLayerOptions radius(double radius) {
         setProperty("radius", radius);
         this.radius = radius;
+        return this;
+    }
+    
+    public HeatmapLayerOptions maxIntensity(double maxIntensity) {
+        setProperty("maxIntensity", maxIntensity);
+        this.maxIntensity = maxIntensity;
+        return this;
+    }
+    
+    public HeatmapLayerOptions dissipating(boolean dissipating) {
+        setProperty("dissipating", dissipating);
+        this.dissipating = dissipating;
         return this;
     }
     

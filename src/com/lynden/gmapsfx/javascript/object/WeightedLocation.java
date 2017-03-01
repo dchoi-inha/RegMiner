@@ -54,9 +54,9 @@ public class WeightedLocation extends JavascriptObject {
         builder.append("{");
         builder.append("location: ").append(location.getVariableName()).append("");
         builder.append(",");
-        builder.append("weight: ").append(weight).append("");
+        builder.append(" weight: ").append(weight).append("");
         builder.append("}");
-//        System.out.println("COMPONENT " + builder.toString());
+        System.out.println("COMPONENT " + builder.toString());
         return builder.toString();
     }
 
