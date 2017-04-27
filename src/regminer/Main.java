@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 
-
+import regminer.algorithm.GridMiner;
 import regminer.algorithm.Miner;
 import regminer.algorithm.RegMiner;
 import regminer.struct.PRegion;
@@ -32,7 +32,7 @@ public class Main {
 	
 	public static void main(String[] args) {
 		
-		final String dataName = "US";	
+		final String dataName = "UK";	
 
 		
 		Debug._PrintL(dataName + "\tmax memory size: " + java.lang.Runtime.getRuntime().maxMemory()/(double)1024/(double)1024/(double)1024 + "GBs");
@@ -61,9 +61,19 @@ public class Main {
 			double time = 0.0;
 			ArrayList<PRegion> result = new ArrayList<PRegion>();
 			
-			Miner skeleton = new RegMiner(P, T, C, Env.ep, Env.sg, Env.MaxTimeGap);
+//			Miner gridMiner = new GridMiner(P, T, C, Env.ep, Env.sg, Env.MaxTimeGap);
+//			cpuTimeElapsed = Util.getCpuTime();
+//			result = gridMiner.mine();
+//			cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; time = cpuTimeElapsed/(double)1000000000;
+//			
+//			Debug._PrintL("# pRegions: " + result.size());
+//			Debug._PrintL("time:" + time);
+//			Debug._PrintL("\n\n");
+			
+			
+			Miner regMiner = new RegMiner(P, T, C, Env.ep, Env.sg, Env.MaxTimeGap);
 			cpuTimeElapsed = Util.getCpuTime();
-			result = skeleton.mine();
+			result = regMiner.mine();
 			cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; time = cpuTimeElapsed/(double)1000000000;
 			
 			Debug._PrintL("# pRegions: " + result.size());
