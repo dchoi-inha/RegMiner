@@ -17,7 +17,7 @@ public class Place {
 	public String category;
 	
 	
-	private ArrayList<PRoute> postingTrns; // why not a set? Since it shoud contain multiple transitions.
+	private ArrayList<PRoute> postingPRoutes; // why not a set? Since it should contain multiple pRoutes.
 	
 	public Place (String id, double lat, double lon, String category)
 	{
@@ -26,7 +26,7 @@ public class Place {
 		this.lon = lon;
 		this.category = category;
 		
-		this.postingTrns = null;
+		this.postingPRoutes = null;
 	}
 	public void setLoc(double x, double y)
 	{
@@ -73,23 +73,23 @@ public class Place {
 	}
 	
 	public void addPostingTrn(PRoute transition) {
-		if (this.postingTrns == null) 
-			this.postingTrns = new ArrayList<PRoute>();
+		if (this.postingPRoutes == null) 
+			this.postingPRoutes = new ArrayList<PRoute>();
 		
-		postingTrns.add(transition);
+		postingPRoutes.add(transition);
 	}
 	public void delPostingTrn(PRoute transition) {
-		if (this.postingTrns != null) 
-			postingTrns.remove(transition);
+		if (this.postingPRoutes != null) 
+			postingPRoutes.remove(transition);
 		
 	}
 	public void clearPostings() {
-		if (this.postingTrns != null) 
-			this.postingTrns.clear();		
+		if (this.postingPRoutes != null) 
+			this.postingPRoutes.clear();		
 	}
 	
 	public ArrayList<PRoute> postingTrns() {
-		return postingTrns;
+		return postingPRoutes;
 	}
 	
 	

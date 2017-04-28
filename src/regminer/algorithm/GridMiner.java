@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
+import regminer.rtree.MBR;
 import regminer.struct.PRegion;
 import regminer.struct.PRoute;
 import regminer.struct.PRouteSet;
@@ -23,9 +24,14 @@ import regminer.util.Debug;
  */
 public class GridMiner extends Miner {
 	
+	final int NW=0, NE=1, SW=2, SE=3;
+	
+	private double factor;
+	
 	public GridMiner (ArrayList<Place> places, ArrayList<Trajectory> trajs,
-			Set<String> cateSet, double ep, double sg, double dt) {
+			Set<String> cateSet, double ep, double sg, double dt, double factor) {
 		super(places, trajs, cateSet, ep, sg, dt);
+		this.factor = factor;
 	}
 	
 	@Override
@@ -36,48 +42,93 @@ public class GridMiner extends Miner {
 		ArrayList<PRegion> pRegions = new ArrayList<PRegion>();
 		splitTrajectoriesByTimeGap();
 
-		gridMine(this.trajs, pRegions);	
+		gridMine(this.trajs, pRegions, new MBR(0, 1, 0, 1));	
 		
 		return pRegions;
 	}
 	
 	
-	private void gridMine(ArrayList<Trajectory> trajectories, ArrayList<PRegion> pRegions) {
+	private void gridMine(ArrayList<Trajectory> trajectories, ArrayList<PRegion> pRegions, MBR cell) {
 		// 1. Find all frequent patterns along with their sets of transitions
-		ArrayList<PRouteSet> freqTrnSets = new ArrayList<PRouteSet>();
-		compactGrow(freqTrnSets, trajectories);
+		ArrayList<PRouteSet> freqPRouteSets = new ArrayList<PRouteSet>();
+		compactGrow(freqPRouteSets, trajectories);
 		
 		// 2. Return patterns that are dense w.r.t. the current space
-		for (PRouteSet prSet: freqTrnSets) {
+		for (PRouteSet prSet: freqPRouteSets) {
 			/***************************************************************************/
 			if (prSet.pattern.length() < 2) continue;
 			/***************************************************************************/
 			
-			// TODO: SPECIFY THESE VARIABLES!
-			double w = 0;
-			double h = 0;
-			/////////////////////////////////
-			
-			double pDensity = prSet.weight() * (4*Math.pow(this.sg, 2) * prSet.pattern.length()  / (w*h));
+			double pDensity = prSet.weight() * (this.factor*Math.PI*Math.pow(this.ep, 2) * prSet.pattern.length()  / (cell.width()*cell.height()));
 			if (pDensity >= this.sg) {
 				PRegion pRegion = new PRegion(prSet);
 				pRegions.add(pRegion);
+				Debug._PrintL(pRegion.toString() + "(pDensity=" + pDensity +")" + cell);
+//				for (PRoute route: prSet) {
+//					Debug._PrintL(route.toString());
+//				}
 			}
 		}
 		
 		// 3. Split the input set of trajectories into 4 quadrants
-		ArrayList<ArrayList<Trajectory>> cells = splitTrajectoriesByGrid(trajectories);
+		double xm = (cell.x.l+cell.x.h)/2.0; 
+		double ym = (cell.y.l+cell.y.h)/2.0;
+		MBR [] quads = new MBR[4];
+		quads[NW] = new MBR(cell.x.l, xm, ym, cell.y.h);
+		quads[NE] = new MBR(xm, cell.x.h, ym, cell.y.h);
+		quads[SW] = new MBR(cell.x.l, xm, cell.y.l, ym);
+		quads[SE] = new MBR(xm, cell.x.h, cell.y.l, ym);
 		
-		for (ArrayList<Trajectory> cell: cells) {
-			gridMine(cell, pRegions);
+		ArrayList<Trajectory> [] traSets = new ArrayList[4];
+		traSets[NW] = new ArrayList<Trajectory>();
+		traSets[NE] = new ArrayList<Trajectory>();
+		traSets[SW] = new ArrayList<Trajectory>();
+		traSets[SE] = new ArrayList<Trajectory>();
+		
+		
+		long id = 0;
+		for (Trajectory trajectory: trajectories) {
+			Trajectory newTraj = new Trajectory(++id);
+			int dir = -1;
+			for (Visit visit: trajectory) {
+				if (dir < 0) {
+					for(int i=0; i < 4; i++) {
+						if (quads[i].covers(visit.place.loc)) {
+							dir = i;
+							break;
+						}
+					}
+				}
+				
+				if (quads[dir].covers(visit.place.loc)) {
+					newTraj.add(visit);
+				} else {
+					traSets[dir].add(newTraj);
+					newTraj = new Trajectory(++id);
+					newTraj.add(visit);
+					for(int i=0; i < 4; i++) {
+						if (quads[i].covers(visit.place.loc)) {
+							dir = i;
+							break;
+						}
+					}
+				}
+			}
+			if (newTraj.length() > 0 && dir > 0) traSets[dir].add(newTraj);
 		}
+		
+//		Debug._PrintL("# trajectories(NW): " + traSets[NW].size());
+//		Debug._PrintL("# trajectories(NE): " + traSets[NE].size());
+//		Debug._PrintL("# trajectories(SW): " + traSets[SW].size());
+//		Debug._PrintL("# trajectories(SE): " + traSets[SE].size());
+		
+		for (int i=0; i < 4; i++) {
+			if (!traSets[i].isEmpty()) gridMine(traSets[i], pRegions, quads[i]);
+		}
+		
 	}
 	
-	// TODO: IMPLEMENT THIS FUNCTION!
-	private ArrayList<ArrayList<Trajectory>> splitTrajectoriesByGrid(ArrayList<Trajectory> trajectories) {
-		// if the size of each cell is less than \sigma, do not add the cell
-		return null;
-	}
+	
 
 	
 	public void splitTrajectoriesByTimeGap() {
@@ -107,11 +158,11 @@ public class GridMiner extends Miner {
 	}
 
 	// finding all frequent items
-	private HashSet<String> freqCategories() {
+	private HashSet<String> freqCategories(ArrayList<Trajectory> trajectories) {
 		HashMap<String, Integer> cateFreq = new HashMap<String, Integer>();
 		HashSet<String> freqCateSet = new HashSet<String>();
 		int cnt = 0;
-		for (Trajectory traj: this.trajs)
+		for (Trajectory traj: trajectories)
 		{
 			for (String cate: traj.pattern) 
 			{
@@ -185,8 +236,8 @@ public class GridMiner extends Miner {
 	}
 	
 	public void compactGrow(ArrayList<PRouteSet> output, ArrayList<Trajectory> trajectories) {
-		Debug._PrintL("----Start compactGrow----");
-		HashSet<String> freqCateSet = freqCategories();
+//		Debug._PrintL("----Start compactGrow----(" + trajectories.size()+")");
+		HashSet<String> freqCateSet = freqCategories(trajectories);
 
 		for (String cate: freqCateSet)
 		{
@@ -206,7 +257,7 @@ public class GridMiner extends Miner {
 			prefixSpan(output, freqCateSet, seq, prSet);
 		}
 
-		Debug._PrintL("# freq patterns: " + output.size());
+//		Debug._PrintL("# freq patterns: " + output.size());
 		
 		
 		/***************************************************************************/
@@ -218,7 +269,7 @@ public class GridMiner extends Miner {
 //		}
 		/***************************************************************************/
 		
-		Debug._PrintL("----End compactGrow----");
+//		Debug._PrintL("----End compactGrow----");
 	}
 
 }

@@ -12,23 +12,23 @@ import java.util.HashSet;
 public class PRegion {
 	public HashSet<Place> P;
 	public Pattern S;
-	public PRouteSet trns;
+	public PRouteSet pRoutes;
 	
-	public PRegion(PRouteSet trns) {
-		P = trns.computePOIs();
-		S = trns.pattern;
-		this.trns = trns;
+	public PRegion(PRouteSet prtSet) {
+		P = prtSet.computePOIs();
+		S = prtSet.pattern;
+		this.pRoutes = prtSet;
 	}
 	
 	public String toString() {
-		return "Region" + S.toString() +"(size="+trns.size()+")" ;//+ "\n" + trnsStr();
+		return "Region" + S.toString() +"(size="+pRoutes.size()+")" ;//+ "\n" + trnsStr();
 //		return S.toString() + "(" +trns.size()+" core transitions, " + P.size() + " POIs)";
 	}
 	
 	public String trnsStr() {
 		String str = "";
 		
-		for (PRoute trn: trns) {
+		for (PRoute trn: pRoutes) {
 			str += trn.toString() + "(density=" + trn.density() + ")\n";
 		}
 		

@@ -61,4 +61,16 @@ public class MBR {
 
 	}
 	
+	public double width() {
+		return x.h - x.l;
+	}
+	
+	public double height() {
+		return y.h - y.l;
+	}
+	
+	public boolean covers(Point p) {
+		return (x.l <= p.x && p.x <= x.h && y.l <= p.y && p.y <= y.h);
+	}
+	
 }

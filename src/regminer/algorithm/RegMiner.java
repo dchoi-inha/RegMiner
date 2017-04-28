@@ -19,6 +19,68 @@ public class RegMiner extends Miner {
 		super(places, trajs, cateSet, ep, sg, dt);
 	}
 	
+	@Override
+	public ArrayList<PRegion> mine() {
+		Debug._PrintL("");
+		Debug._PrintL("--------------Start RegMiner----------");
+		
+		ArrayList<PRegion> pRegions = new ArrayList<PRegion>();
+
+		// 0. Split trajectories by time gap
+		splitTrajectoriesByTimeGap();
+		
+		
+		// 1. Find all frequent patterns along with their sets of pRoutes
+		ArrayList<PRouteSet> freqPRouteSets = new ArrayList<PRouteSet>();
+		compactGrow(freqPRouteSets);		
+
+		
+		// 2. Compute pRegions for each pattern
+		for (PRouteSet prSet: freqPRouteSets) {
+			Pattern seq = prSet.pattern;
+			
+			/***************************************************************************/
+			if (seq.length() < 2) continue;
+			/***************************************************************************/
+
+			// 2.1. construct the R-tree on POIs in trnSet
+			RTree rtree = new RTree();
+			HashSet<Place> places = prSet.computePOIs();
+			for (Place p: places) {
+				p.clearPostings(); // for each prSet, clear postings..
+				rtree.insert(p);
+			}
+			
+			// 2.2. construct the inverted list of posting pRoutes
+			for (PRoute route: prSet) {
+				route.addPostings();
+			}
+
+			// 2.3. perform pDBSCAN()
+			ArrayList<PRouteSet> clusters = pDBSCAN(prSet, rtree);
+			Debug._PrintL(prSet.pattern.toString() + "\t" + prSet.size() + "\t" + prSet.weight() + "\t" + prSet.avgDensity());
+			
+			if (clusters.size() > 0) {
+//				Debug._PrintL(seq + "\t" + prSet.size() + "\t" + prSet.weight() + "\t" + clusters.size());
+				Debug._PrintL("# pRegions: " + clusters.size());
+				for (PRouteSet cluster: clusters) {
+					PRegion pRegion = new PRegion(cluster);
+					pRegions.add(pRegion);
+//					Debug._PrintL(pRegion.toString());
+//					for (PRoute route: cluster) {
+//						Debug._PrintL(route.toString());
+//					}
+				}
+			}
+			else {
+				Debug._PrintL("No Cluster!");
+			}
+		}
+
+		Debug._PrintL("--------------End of RegMiner----------");
+		return pRegions;
+	}
+	
 	public void splitTrajectoriesByTimeGap() {
 		ArrayList<Trajectory> newTrajectories = new ArrayList<Trajectory>();
 		
@@ -57,68 +119,6 @@ public class RegMiner extends Miner {
 		compactGrow(freqTrnSets);	
 		
 		return freqTrnSets;
-	}
-
-	@Override
-	public ArrayList<PRegion> mine() {
-		Debug._PrintL("");
-		Debug._PrintL("--------------Start RegMiner----------");
-		
-		ArrayList<PRegion> pRegions = new ArrayList<PRegion>();
-
-		// 0. Split trajectories by time gap
-		splitTrajectoriesByTimeGap();
-		
-		
-		// 1. Find all frequent patterns along with their sets of transitions
-		ArrayList<PRouteSet> freqTrnSets = new ArrayList<PRouteSet>();
-		compactGrow(freqTrnSets);		
-
-		
-		// 2. Compute pRegions for each pattern
-		for (PRouteSet prSet: freqTrnSets) {
-			Pattern seq = prSet.pattern;
-			
-			/***************************************************************************/
-			if (seq.length() < 2) continue;
-			/***************************************************************************/
-
-			// 2.1. construct the R-tree on POIs in trnSet
-			RTree rtree = new RTree();
-			HashSet<Place> places = prSet.computePOIs();
-			for (Place p: places) {
-				p.clearPostings(); // for each trnSet, clear postings..
-				rtree.insert(p);
-			}
-			
-			// 2.2. construct the inverted list of posting transitions
-			for (PRoute route: prSet) {
-				route.addPostings();
-			}
-
-			// 2.3. perform pDBSCAN()
-			ArrayList<PRouteSet> clusters = pDBSCAN(prSet, rtree);
-			Debug._PrintL(prSet.pattern.toString() + "\t" + prSet.size() + "\t" + prSet.weight() + "\t" + prSet.avgDensity());
-			
-			if (clusters.size() > 0) {
-//				Debug._PrintL(seq + "\t" + prSet.size() + "\t" + prSet.weight() + "\t" + clusters.size());
-				Debug._PrintL("# pRegions: " + clusters.size());
-				for (PRouteSet cluster: clusters) {
-					PRegion pRegion = new PRegion(cluster);
-					pRegions.add(pRegion);
-//					Debug._PrintL(pRegion.toString());
-//					for (PRoute route: cluster) {
-//						Debug._PrintL(route.toString());
-//					}
-				}
-			}
-			else {
-				Debug._PrintL("No Cluster!");
-			}
-		}
-
-		Debug._PrintL("--------------End of RegMiner----------");
-		return pRegions;
 	}
 
 

@@ -34,6 +34,7 @@ import javafx.scene.Scene;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import regminer.Main;
+import regminer.algorithm.GridMiner;
 import regminer.algorithm.Miner;
 import regminer.algorithm.RegMiner;
 import regminer.algorithm.RegMiner;
@@ -129,7 +130,7 @@ public class MainApp extends Application implements MapComponentInitializedListe
 //		Pattern visiblePattern1 = new Pattern(new String[] {"Plaza", "Monument / Landmark"});
 //		Pattern visiblePattern2 = new Pattern(new String[] {"NULL", "NULL"});
 
-		RegMiner regminer = new RegMiner(P, T, C, Env.ep, Env.sg, Env.MaxTimeGap);
+		Miner regminer = new GridMiner(P, T, C, Env.ep, Env.sg, Env.MaxTimeGap, 2);
 		
 //		ArrayList<PRouteSet> freqPRSets = regminer.getFreqTrnSets();
 //		for (PRouteSet prSet: freqPRSets) {
@@ -151,7 +152,7 @@ public class MainApp extends Application implements MapComponentInitializedListe
 //			lengthCnts[pRegion.S.length()-2]++;
 			if (pRegion.S.equals(visiblePattern1) || pRegion.S.equals(visiblePattern2)) {
 				Debug._PrintL(pRegion.toString());
-				printPRegionTrns(pRegion.trns, heatMapData);
+				printPRegionTrns(pRegion.pRoutes, heatMapData);
 				Debug._Print("\n");
 				
 				avgLat = pRegion.P.stream().mapToDouble(val -> val.lat).average().getAsDouble();
