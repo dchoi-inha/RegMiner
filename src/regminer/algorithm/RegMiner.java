@@ -58,22 +58,22 @@ public class RegMiner extends Miner {
 
 			// 2.3. perform pDBSCAN()
 			ArrayList<PRouteSet> clusters = pDBSCAN(prSet, rtree);
-			Debug._PrintL(prSet.pattern.toString() + "\t" + prSet.size() + "\t" + prSet.weight() + "\t" + prSet.avgDensity());
+//			Debug._PrintL(prSet.pattern.toString() + "\t" + prSet.size() + "\t" + prSet.weight() + "\t" + prSet.avgDensity());
 			
 			if (clusters.size() > 0) {
 //				Debug._PrintL(seq + "\t" + prSet.size() + "\t" + prSet.weight() + "\t" + clusters.size());
-				Debug._PrintL("# pRegions: " + clusters.size());
+//				Debug._PrintL("# pRegions: " + clusters.size());
 				for (PRouteSet cluster: clusters) {
 					PRegion pRegion = new PRegion(cluster);
 					pRegions.add(pRegion);
-//					Debug._PrintL(pRegion.toString());
+					Debug._PrintL(pRegion.toString());
 //					for (PRoute route: cluster) {
 //						Debug._PrintL(route.toString());
 //					}
 				}
 			}
 			else {
-				Debug._PrintL("No Cluster!");
+//				Debug._PrintL("No Cluster!");
 			}
 		}
 

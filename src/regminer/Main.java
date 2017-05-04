@@ -32,7 +32,7 @@ public class Main {
 	
 	public static void main(String[] args) {
 		
-		final String dataName = "UK";	
+		final String dataName = "NY";	
 
 		
 		Debug._PrintL(dataName + "\tmax memory size: " + java.lang.Runtime.getRuntime().maxMemory()/(double)1024/(double)1024/(double)1024 + "GBs");
@@ -44,7 +44,7 @@ public class Main {
 		final double [] sgArray = new double [] {20, 30, 40, 50, 100, 150};
 		final long [] timeGapArray = new long [] {60*6, 60*12, 60*24, 60*48};
 		
-		final double gridFactor = 100.0; 
+		final double gridFactor = 1.0; 
 
 		for (int i=0; i < sgArray.length; i++) {
 			P = loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/"+dataName+"/places.txt");
@@ -63,24 +63,24 @@ public class Main {
 			double time = 0.0;
 			ArrayList<PRegion> result = new ArrayList<PRegion>();
 			
-			Miner gridMiner = new GridMiner(P, T, C, Env.ep, Env.sg, Env.MaxTimeGap, gridFactor);
-			cpuTimeElapsed = Util.getCpuTime();
-			result = gridMiner.mine();
-			cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; time = cpuTimeElapsed/(double)1000000000;
-			
-			Debug._PrintL("# pRegions: " + result.size());
-			Debug._PrintL("time:" + time);
-			Debug._PrintL("\n\n");
-			
-			
-//			Miner regMiner = new RegMiner(P, T, C, Env.ep, Env.sg, Env.MaxTimeGap);
+//			Miner gridMiner = new GridMiner(P, T, C, Env.ep, Env.sg, Env.MaxTimeGap, gridFactor);
 //			cpuTimeElapsed = Util.getCpuTime();
-//			result = regMiner.mine();
+//			result = gridMiner.mine();
 //			cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; time = cpuTimeElapsed/(double)1000000000;
 //			
 //			Debug._PrintL("# pRegions: " + result.size());
 //			Debug._PrintL("time:" + time);
 //			Debug._PrintL("\n\n");
+			
+			
+			Miner regMiner = new RegMiner(P, T, C, Env.ep, Env.sg, Env.MaxTimeGap);
+			cpuTimeElapsed = Util.getCpuTime();
+			result = regMiner.mine();
+			cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; time = cpuTimeElapsed/(double)1000000000;
+			
+			Debug._PrintL("# pRegions: " + result.size());
+			Debug._PrintL("time:" + time);
+			Debug._PrintL("\n\n");
 		}
 		
 	}

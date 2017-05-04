@@ -49,11 +49,13 @@ public class GridMiner extends Miner {
 	
 	
 	private void gridMine(ArrayList<Trajectory> trajectories, ArrayList<PRegion> pRegions, MBR cell) {
+//		Debug._PrintL("MBR:" + cell + " n:" + trajectories.size());
+		
 		// 1. Find all frequent patterns along with their sets of transitions
 		ArrayList<PRouteSet> freqPRouteSets = new ArrayList<PRouteSet>();
 		compactGrow(freqPRouteSets, trajectories);
 		
-		// 2. Return patterns that are dense w.r.t. the current space
+		// 2. Return patterns that are dense w.r.t. the current cell space
 		for (PRouteSet prSet: freqPRouteSets) {
 			/***************************************************************************/
 			if (prSet.pattern.length() < 2) continue;
@@ -114,7 +116,7 @@ public class GridMiner extends Miner {
 					}
 				}
 			}
-			if (newTraj.length() > 0 && dir > 0) traSets[dir].add(newTraj);
+			if (newTraj.length() > 1 && dir > 0) traSets[dir].add(newTraj);
 		}
 		
 //		Debug._PrintL("# trajectories(NW): " + traSets[NW].size());
