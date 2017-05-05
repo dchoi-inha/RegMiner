@@ -116,7 +116,7 @@ public class RTree {
 			pq = new PriorityQueue<Entry>(11, Entry.CompareDist);
 			for(int i = 0; i < R.size(); i++) {
 				Entry e = R.get(i);
-				e.dist = e.distTo(q);
+				e.dist = e.minDistTo(q);
 				pq.add(e);
 			}
 		}
@@ -130,7 +130,7 @@ public class RTree {
 				else nodeCount++;
 				for(int i = 0; i < next.child.size(); i++) { // node
 					Entry e = next.child.get(i);
-					e.dist = e.distTo(q);
+					e.dist = e.minDistTo(q);
 					pq.add(e);
 				}
 			}
@@ -145,13 +145,83 @@ public class RTree {
 		PriorityQueue<Entry> pq = new PriorityQueue<Entry>(11, Entry.CompareDist);
 		for(int i = 0; i < R.size(); i++) {
 			Entry e = R.get(i);
-			e.dist = e.distTo(q);
+			e.dist = e.minDistTo(q);
 			pq.add(e);
 		}
 		for (int i=0; i < k; i++){
 			knns.add(nextNN(q, pq));
 		}
 		return knns;
+	}
+	
+//	public double kNNDistByPRoute(Point q, int k, HashSet<Place> ownPlaces) {
+//		LEntry neighbor = null;
+//		nodeCount = 1;
+//		leafCount = 0;
+//		PriorityQueue<Entry> pq = new PriorityQueue<Entry>(11, Entry.CompareDist);
+//		for(int i = 0; i < R.size(); i++) {
+//			Entry e = R.get(i);
+//			e.dist = e.distTo(q);
+//			pq.add(e);
+//		}
+//		LEntry next = null;
+//		for (int i=0; i < k; i++){
+//			next = (LEntry) nextNN(q, pq);
+//			
+//			if (next == null) return neighbor.distTo(q);
+//			else if (ownPlaces.contains(next.obj)) {
+//				i--;
+//				continue; // for each pRoute, pass its own places.
+//			}
+//			else neighbor = next;
+//		}
+//		return neighbor.distTo(q);
+//	}
+	
+	public double kNNDistByPlace(Point q, int k) {
+		Entry neighbor = null;
+		nodeCount = 1;
+		leafCount = 0;
+		PriorityQueue<Entry> pq = new PriorityQueue<Entry>(11, Entry.CompareDist);
+		for(int i = 0; i < R.size(); i++) {
+			Entry e = R.get(i);
+			e.dist = e.minDistTo(q);
+			pq.add(e);
+		}
+		Entry next = null;
+		for (int i=0; i < k; i++){
+			next = nextNN(q, pq);
+			if (next == null) return neighbor.minDistTo(q);
+			else neighbor = next;
+		}
+		return neighbor.minDistTo(q);
+	}
+	
+	public double farthestDist(Point q) {
+		PriorityQueue<Entry> pq = new PriorityQueue<Entry>(11, Entry.CompareDist.reversed());
+
+		for(int i = 0; i < R.size(); i++) {
+			Entry e = R.get(i);
+			e.dist = e.maxDistTo(q);
+			pq.add(e);
+		}
+		Entry next = null;
+		double dist = 0.0;
+		while ((next=pq.poll()) != null)
+		{
+			if (next.child == null) {// point
+				dist = next.dist;
+				break;
+			}
+			else {
+				for(int i = 0; i < next.child.size(); i++) { // node
+					Entry e = next.child.get(i);
+					e.dist = e.maxDistTo(q);
+					pq.add(e);
+				}
+			}
+		}
+		return dist;
 	}
 
 	/* Insert */

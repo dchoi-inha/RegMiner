@@ -8,7 +8,9 @@ import java.io.ObjectOutputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
+import java.util.Set;
 
+import regminer.struct.Circle;
 import regminer.struct.Place;
 import regminer.struct.Point;
 
@@ -127,21 +129,70 @@ public class Util {
 				bean.getCurrentThreadCpuTime(): 0L;
 	}
 	
-	
-	 public static <T extends Object> T getCopy(T obj) throws IOException, ClassNotFoundException{
-		  
-		  ByteArrayOutputStream byteOutStream = new ByteArrayOutputStream();
-		  ObjectOutputStream objectOutStream = new ObjectOutputStream (byteOutStream);
-		  objectOutStream.writeObject(obj);
-		  objectOutStream.flush();
-		  objectOutStream.close();
-		  byteOutStream.close();
-		  byte[] byteData = byteOutStream.toByteArray();
+	public static Circle findSec( Set<Point> locs ) 
+	{
+	    Point[] p = new Point[locs.size()];	// points input by the user
+	    int n = locs.size();					// Number of points 
+	    Point[] b = new Point[3];				// Points on the boundary of the circle
 
-		  ByteArrayInputStream bais = new ByteArrayInputStream(byteData);
-		  T copy = (T) new ObjectInputStream(bais).readObject();
-		  
-		  return copy;
-		 }
+	    int i = 0;
+	    for ( Point loc: locs ) {
+	    	p[i++] = new Point(loc.getX(), loc.getY());
+	    }
+	    
+	    return findSec(n, p, 0, b);
+	}
+	
+	// Compute the Smallest Enclosing Circle of the n points in p, 
+	// such that the m points in B lie on the boundary of the circle.
+	private static Circle findSec(int n, Point[] p, int m, Point[] b)
+	{
+		Circle sec = new Circle();
+		
+		// Compute the Smallest Enclosing Circle defined by B
+		if(m == 1)
+		{
+			sec = new Circle(b[0]);
+		}
+		else if(m == 2)
+		{
+			sec = new Circle(b[0], b[1]);
+		}
+		else if(m == 3)
+		{
+			return new Circle( b[0], b[1], b[2]);
+		}
+	
+		// Check if all the points in p are enclosed
+		for(int i=0; i<n; i++)
+		{
+			if(sec.contain(p[i]) == 1)
+			{
+				// Compute B <--- B union P[i].
+				b[m] = new Point(p[i]);	
+				// Recurse
+				sec = findSec(i, p, m+1, b);
+			}
+		}
+		
+		return sec;
+	}
+	
+	
+	public static <T extends Object> T getCopy(T obj) throws IOException, ClassNotFoundException{
+
+		ByteArrayOutputStream byteOutStream = new ByteArrayOutputStream();
+		ObjectOutputStream objectOutStream = new ObjectOutputStream (byteOutStream);
+		objectOutStream.writeObject(obj);
+		objectOutStream.flush();
+		objectOutStream.close();
+		byteOutStream.close();
+		byte[] byteData = byteOutStream.toByteArray();
+
+		ByteArrayInputStream bais = new ByteArrayInputStream(byteData);
+		T copy = (T) new ObjectInputStream(bais).readObject();
+
+		return copy;
+	}
 
 }

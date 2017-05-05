@@ -12,6 +12,7 @@ import java.util.Set;
 
 import regminer.algorithm.GridMiner;
 import regminer.algorithm.Miner;
+import regminer.algorithm.QualityAssessor;
 import regminer.algorithm.RegMiner;
 import regminer.struct.PRegion;
 import regminer.struct.Place;
@@ -32,7 +33,7 @@ public class Main {
 	
 	public static void main(String[] args) {
 		
-		final String dataName = "NY";	
+		final String dataName = "US";	
 
 		
 		Debug._PrintL(dataName + "\tmax memory size: " + java.lang.Runtime.getRuntime().maxMemory()/(double)1024/(double)1024/(double)1024 + "GBs");
@@ -44,43 +45,49 @@ public class Main {
 		final double [] sgArray = new double [] {20, 30, 40, 50, 100, 150};
 		final long [] timeGapArray = new long [] {60*6, 60*12, 60*24, 60*48};
 		
-		final double gridFactor = 1.0; 
+		final double [] gridFactorArray = new double [] {1.0, 10.0, 100.0, 1000.0};
 
-		for (int i=0; i < sgArray.length; i++) {
+		QualityAssessor assessor = new QualityAssessor();
+//		for (int i=0; i < sgArray.length; i++) {
+		for (int i=0; i < gridFactorArray.length; i++) {
 			P = loadPOIs(System.getProperty("user.home")+"/exp/TraRegion/dataset/"+dataName+"/places.txt");
 			T = loadTrajectories(System.getProperty("user.home")+"/exp/TraRegion/dataset/"+dataName+"/check-ins.txt");
 			C = loadCategories();
 
-			Env.sg = sgArray[i];
+			Env.sg = sgArray[1];
 			Env.NeighborSize = neighborSizeArray[3];
 			Env.ep = Env.NeighborSize * Env.ScaleFactor;
 			Env.MaxTimeGap = timeGapArray[2];
+			Env.gridFactor = gridFactorArray[i];
 			
-			Debug._PrintL("sup: " + Env.sg +"  ep(Kms):" + Env.NeighborSize +"  ep:" + Env.ep + "  time gap: " + Env.MaxTimeGap + "  BlockSize: " + Env.B);
+			Debug._PrintL("sup: " + Env.sg +"  ep(Kms):" + Env.NeighborSize + "  time gap: " + Env.MaxTimeGap + "  gridFactor: " + Env.gridFactor);
+			Debug._PrintL("ep(float):" + Env.ep + "  BlockSize: " + Env.B);
 
 			
 			long cpuTimeElapsed;
 			double time = 0.0;
 			ArrayList<PRegion> result = new ArrayList<PRegion>();
 			
-//			Miner gridMiner = new GridMiner(P, T, C, Env.ep, Env.sg, Env.MaxTimeGap, gridFactor);
-//			cpuTimeElapsed = Util.getCpuTime();
-//			result = gridMiner.mine();
-//			cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; time = cpuTimeElapsed/(double)1000000000;
-//			
-//			Debug._PrintL("# pRegions: " + result.size());
-//			Debug._PrintL("time:" + time);
-//			Debug._PrintL("\n\n");
-			
-			
-			Miner regMiner = new RegMiner(P, T, C, Env.ep, Env.sg, Env.MaxTimeGap);
+			Miner gridMiner = new GridMiner(P, T, C, Env.ep, Env.sg, Env.MaxTimeGap, Env.gridFactor);
 			cpuTimeElapsed = Util.getCpuTime();
-			result = regMiner.mine();
+			result = gridMiner.mine();
 			cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; time = cpuTimeElapsed/(double)1000000000;
 			
 			Debug._PrintL("# pRegions: " + result.size());
+			assessor.assess(result);			
 			Debug._PrintL("time:" + time);
 			Debug._PrintL("\n\n");
+			
+			
+//			Miner regMiner = new RegMiner(P, T, C, Env.ep, Env.sg, Env.MaxTimeGap);
+//			cpuTimeElapsed = Util.getCpuTime();
+//			result = regMiner.mine();
+//			cpuTimeElapsed = Util.getCpuTime() - cpuTimeElapsed; time = cpuTimeElapsed/(double)1000000000;
+//			
+//			Debug._PrintL("# pRegions: " + result.size());
+//			assessor.assess(result);			
+//			Debug._PrintL("time:" + time);
+//			Debug._PrintL("\n\n");
 		}
 		
 	}

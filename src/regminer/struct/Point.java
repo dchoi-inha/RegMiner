@@ -79,4 +79,22 @@ public class Point implements Comparable<Point> {
 		return Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
 	}
 
+	
+	
+	public Point midPoint(Point p2) {
+		return new Point((x+p2.x)/2, (y+p2.y)/2);
+	}
+	
+    // Translate a point to the specified location
+    public void translate(Point point)
+    {
+		translate(point.x, point.y);
+    }
+    // Translate a point to the specified location (newX, newY)
+    public void translate(double newX, double newY)
+    {
+		x = newX;
+		y = newY;
+    }
+
 }

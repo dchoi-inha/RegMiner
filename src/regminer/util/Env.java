@@ -23,6 +23,8 @@ public class Env {
 	public static double ep = 0.001;
 	public static double sg = 25;
 	
+	public static double gridFactor = 1.0;
+	
 	public static double NeighborSize = 1; // kilometers
 	
 	public static long MaxTimeGap = 60*24*1; // in minutes

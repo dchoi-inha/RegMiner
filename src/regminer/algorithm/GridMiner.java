@@ -42,30 +42,33 @@ public class GridMiner extends Miner {
 		ArrayList<PRegion> pRegions = new ArrayList<PRegion>();
 		splitTrajectoriesByTimeGap();
 
-		gridMine(this.trajs, pRegions, new MBR(0, 1, 0, 1));	
+		gridMine(this.trajs, pRegions, new MBR(0, 1, 0, 1), new HashSet<Pattern>());	
 		
 		return pRegions;
 	}
 	
 	
-	private void gridMine(ArrayList<Trajectory> trajectories, ArrayList<PRegion> pRegions, MBR cell) {
+	private void gridMine(ArrayList<Trajectory> trajectories, ArrayList<PRegion> pRegions, MBR cell, Set<Pattern> foundPatterns) {
 //		Debug._PrintL("MBR:" + cell + " n:" + trajectories.size());
 		
 		// 1. Find all frequent patterns along with their sets of transitions
 		ArrayList<PRouteSet> freqPRouteSets = new ArrayList<PRouteSet>();
 		compactGrow(freqPRouteSets, trajectories);
 		
-		// 2. Return patterns that are dense w.r.t. the current cell space
+		// 2. Return patterns that are dense w.r.t. the current cell space, but yet to be found in the parent cell space
 		for (PRouteSet prSet: freqPRouteSets) {
 			/***************************************************************************/
 			if (prSet.pattern.length() < 2) continue;
+			if (foundPatterns.contains(prSet.pattern)) 
+				continue;
 			/***************************************************************************/
 			
 			double pDensity = prSet.weight() * (this.factor*Math.PI*Math.pow(this.ep, 2) * prSet.pattern.length()  / (cell.width()*cell.height()));
 			if (pDensity >= this.sg) {
 				PRegion pRegion = new PRegion(prSet);
 				pRegions.add(pRegion);
-				Debug._PrintL(pRegion.toString() + "(pDensity=" + pDensity +")" + cell);
+				foundPatterns.add(prSet.pattern);
+//				Debug._PrintL(pRegion.toString() + "(pDensity=" + pDensity +")" + cell);
 //				for (PRoute route: prSet) {
 //					Debug._PrintL(route.toString());
 //				}
@@ -125,7 +128,7 @@ public class GridMiner extends Miner {
 //		Debug._PrintL("# trajectories(SE): " + traSets[SE].size());
 		
 		for (int i=0; i < 4; i++) {
-			if (!traSets[i].isEmpty()) gridMine(traSets[i], pRegions, quads[i]);
+			if (!traSets[i].isEmpty()) gridMine(traSets[i], pRegions, quads[i], new HashSet<Pattern>(foundPatterns));
 		}
 		
 	}

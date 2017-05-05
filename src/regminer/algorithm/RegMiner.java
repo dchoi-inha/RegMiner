@@ -64,9 +64,10 @@ public class RegMiner extends Miner {
 //				Debug._PrintL(seq + "\t" + prSet.size() + "\t" + prSet.weight() + "\t" + clusters.size());
 //				Debug._PrintL("# pRegions: " + clusters.size());
 				for (PRouteSet cluster: clusters) {
+//					Debug._PrintL(seq + "\t" + cluster.size() + "\t" + cluster.weight());
 					PRegion pRegion = new PRegion(cluster);
 					pRegions.add(pRegion);
-					Debug._PrintL(pRegion.toString());
+//					Debug._PrintL(pRegion.toString());
 //					for (PRoute route: cluster) {
 //						Debug._PrintL(route.toString());
 //					}
@@ -279,6 +280,7 @@ public class RegMiner extends Miner {
 		return clusters;
 	}
 	
+		
 	public NeighborPRouteSet getNeighbors(PRoute trn, RTree rtree) {
 		NeighborPRouteSet neighbors = new NeighborPRouteSet(trn.pattern);
 		

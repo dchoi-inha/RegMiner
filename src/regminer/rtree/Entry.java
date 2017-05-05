@@ -31,7 +31,7 @@ public class Entry {
 	public boolean contains(Point p) {
 		return (x.l <= p.x && x.h >= p.x && y.l <= p.y && y.h >= p.y);
 	}
-	public double distTo(Point p) { // mindist from p to mbr
+	public double minDistTo(Point p) { // mindist from p to mbr
 		double dxl = x.l - p.x;
 		double dyl = y.l - p.y;
 		double dxh = x.h - p.x;
@@ -56,6 +56,21 @@ public class Entry {
 		}
 		Debug._Error(this, "distTo function: No way, you cannot come here....");
 		return -1;
+	}
+	
+	public double maxDistTo(Point p) { // maxdist from p to mbr
+		double dxl = x.l - p.x;
+		double dyl = y.l - p.y;
+		double dxh = x.h - p.x;
+		double dyh = y.h - p.y;
+		
+		double dist = Double.MIN_VALUE;
+		dist = Math.max(dist, Math.sqrt(Math.pow(dxl, 2) + Math.pow(dyl, 2)));
+		dist = Math.max(dist, Math.sqrt(Math.pow(dxh, 2) + Math.pow(dyl, 2)));
+		dist = Math.max(dist, Math.sqrt(Math.pow(dxl, 2) + Math.pow(dyh, 2)));
+		dist = Math.max(dist, Math.sqrt(Math.pow(dxh, 2) + Math.pow(dyh, 2)));
+		
+		return dist;
 	}
 	
 	public double area(){    

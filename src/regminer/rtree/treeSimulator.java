@@ -156,7 +156,7 @@ class LinList {
 		Entry nn = null;
 		double dist, mindist = Double.MAX_VALUE;
 		for (Entry e: l) {
-			dist = e.distTo(q);
+			dist = e.minDistTo(q);
 			if (mindist > dist) {
 				nn = e;
 				mindist = dist;

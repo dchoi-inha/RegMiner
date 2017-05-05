@@ -82,6 +82,13 @@ public class Pattern implements Iterable<String> {
 		return false;
 	}
 	
+	@Override
+	public int hashCode() {
+		return java.util.Objects.hash(seq.toArray());
+	}
+	
+	
+	
 	public boolean startWith(Pattern other) {
 		if (this.length() >= other.length()) {
 			for (int i = 0; i < other.length(); i++) {
@@ -92,6 +99,30 @@ public class Pattern implements Iterable<String> {
 		}
 		return false;
 	}
+	
+	
+	
+	public static void main(String[] args) {
+		Pattern p1, p2;
+		p1 = new Pattern(new String[] {"a", "b", "b", "b", "b", "b", "b", "b", "b"});
+//		p1.add("b");
+//		p1.add("c");
+		
+		p2 = new Pattern("a");
+		p2.add("b");
+		p2.add("b");
+		p2.add("b");
+		p2.add("b");
+		p2.add("b");
+		p2.add("b");
+		p2.add("b");
+		p2.add("b");
+		
+		
+		System.out.println(p1 + " " + p1.hashCode());
+		System.out.println(p2 + " " + p2.hashCode());
+	}
+
 
 	
 }
